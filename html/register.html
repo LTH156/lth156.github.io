@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style_registerLight.css">
+</head>
+
+<body>
+    <div class="registration-container">
+        <span class="close"><i class="fas fa-times"></i></span>
+        <h1>Đăng ký</h1>
+        <form action="#" method="post">
+            <input type="text" name="fullname" placeholder="Tên" required>
+            <input type="email" name="email" placeholder="E-mail" required>
+            <input type="password" name="password" id="password" placeholder="Mật khẩu" required>
+            <!-- Thêm ô Xem Mật Khẩu -->
+            <span class="password-toggle" onclick="togglePasswordVisibility('password')"><i
+                    class="far fa-eye"></i></span>
+            <!-- Thêm ô Gợi ý Mật Khẩu Mạnh -->
+            <span class="password-suggest" onclick="suggestStrongPassword('password')">Gợi ý mật khẩu mạnh</span>
+            <input type="password" name="confirm_password" placeholder="Nhập lại mật khẩu" required>
+            <input type="submit" value="Đăng ký">
+        </form>
+    </div>
+    <script src="../js/register.js" type="module"></script>
+    <script>
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const passwordToggle = document.querySelector('.password-toggle');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordToggle.innerHTML = '<i class="far fa-eye-slash"></i>';
+            } else {
+                passwordInput.type = 'password';
+                passwordToggle.innerHTML = '<i class="far fa-eye"></i>';
+            }
+        }
+
+        function suggestStrongPassword(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const strongPassword = generateStrongPassword();
+            passwordInput.value = strongPassword;
+
+            const confirmPasswordInput = document.querySelector('input[name="confirm_password"]');
+            confirmPasswordInput.value = strongPassword;
+        }
+
+        function generateStrongPassword() {
+            const length = 12; // Độ dài của mật khẩu mạnh
+            const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+            const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const numericChars = "0123456789";
+            const specialChars = "!@#$%^&*()_-+=<>?";
+
+            const allChars = lowercaseChars + uppercaseChars + numericChars + specialChars;
+
+            let password = "";
+
+            // Chọn ít nhất một ký tự từ mỗi loại ký tự để đảm bảo tính mạnh mẽ
+            password += getRandomChar(lowercaseChars);
+            password += getRandomChar(uppercaseChars);
+            password += getRandomChar(numericChars);
+            password += getRandomChar(specialChars);
+
+            // Đảm bảo mật khẩu có đủ độ dài bằng cách chọn ngẫu nhiên các ký tự còn lại
+            for (let i = password.length; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * allChars.length);
+                password += allChars[randomIndex];
+            }
+
+            // Trộn các ký tự trong mật khẩu để tăng độ ngẫu nhiên
+            password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+            return password;
+        }
+
+        function getRandomChar(charset) {
+            const randomIndex = Math.floor(Math.random() * charset.length);
+            return charset[randomIndex];
+        }
+
+    </script>
+</body>
+
+</html>

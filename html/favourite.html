@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yêu thích</title>
+
+
+    <!-- Nhúng link icon  -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--END Nhúng link icon  -->
+
+
+    <!-- Nhúng link BOOSTRAP 4 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <!-- END Nhúng link BOOSTRAP 4 CSS -->
+
+
+    <!-- Nhúng link CSS -->
+    <link rel="stylesheet" href="../assets/css/reset.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
+
+
+    <link rel="stylesheet" href="../assets/css/home.css" id="theme-link">
+    <!-- <link rel="stylesheet" href="../assets/css/home-dark.css" id="theme-link"> -->
+    <!-- END Nhúng link CSS -->
+
+    <!-- check  -->
+</head>
+
+<body>
+
+   
+    <header id="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="row">
+                    <div class="inner-header-top">
+                        
+                        
+                        <div class="login-imp">
+                            <div class="dark-mode btn">
+                                <i class="fa-solid fa-moon"></i>
+                            </div>
+                            <div class="logout-after">
+                                <a href="" class="logout">Đăng xuất</a>
+                                <p class="hello_user"></p>
+                            </div>
+                            <a class="login" href="./login.html">Đăng nhập</a>
+
+                            <ul class="impression">
+                                <li class="fb">
+                                    <i class="fa-brands fa-facebook-f"></i>
+                                    <span class="fb_name">TruyenOPTIT</span>
+                                </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <div class="header-bottom">
+            <div class="container">
+                <div class="row">
+                    <div class="inner-header-bottom">
+                        <a class="logo" href="index.html">
+                            <img src="../assets/images/logo_ptit.png" alt="logo_ptit">
+                            <p class="">TruyenOPTIT</p>
+                        </a>
+                        <ul class="menu">
+                            <li class="category">Thể loại
+                                <ul class="category-list">
+                                    <div class="list">
+
+                                    </div>
+                                </ul>
+                                <i class="fa-solid fa-angle-down"></i>
+                            </li>
+                            
+                            <li class="rank">Xếp hạng
+                                <ul class="rank-type">
+                                    <div class="list">
+                                        <li>
+                                            <a href="./index.html?sort-by=alphabet" >Theo Alphabet</a>
+                                        </li>
+                                        <li>
+                                            <a href="./index.html?sort-by=view" >Theo lượt xem</a>
+                                        </li>
+                                    </div>
+                                </ul>
+                                <i class="fa-solid fa-angle-down"></i>
+                            </li>
+                            <li class="favourite"><a href="favourite.html">Yêu thích</a></li>
+                            <li class="translation_group">Lịch sử
+                            </li>
+                        </ul>
+                        <div class="menu-icon">
+                            <i class="fa-solid fa-bars"></i>
+                        </div>
+                        <div class="search" >
+                            <input placeholder="Tìm truyện tại truyenoptit">
+                            <button>
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <div class="container">
+            <div class="row">
+                <h3 class="recomment-novel">TRUYỆN HAY ĐỀ CỬ</h3>
+
+                <div class="main-slide">
+                    <div class="slide-static">
+                        <div class="slide first_slide">
+                            <div class="content">
+                                <h4 class="title">Tai sinh thanh cong chua</h4>
+                                <div class="in4">
+                                    <div class="chap item">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span>Chap 1</span>
+                                    </div>
+                                    <div class="view item">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span>123 luot xem</span>
+                                    </div>
+                                    <div class="calendar item">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span>12/02/24</span>
+                                    </div>
+                                    <div class="follow item">
+                                        <i class="fa-regular fa-heart"></i>
+                                        <span>123 theo doi</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <img src="https://st.appimg2.xyz/poster/2022/08/19/tai-sinh-thanh-cong-chua-f3ac110a-10e3.jpg"
+                                alt="Image 1">
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </main>
+    <style>
+        #main {
+            display: none;
+        }
+    </style>
+
+    <section class="">
+        <div class="container">
+            <div class="row">
+                <div class="inner-section">
+                    <div class="content">
+
+                        <div class="news">
+                            <img src="../assets/images/ico_new.png" alt="">
+                            <h3>CẬP NHẬT TRUYỆN MỚI </h3>
+                        </div>
+
+                        <div class="abc">
+                            <div class="list-novel-new">
+
+                            </div>
+                        </div>
+                        
+                        <ul class="listPage">
+                            
+                        </ul>
+                    </div>
+
+                    <aside>
+                        <div class="top-category">
+                            <h2 class="category-text">THỂ LOẠI YÊU THÍCH</h2>
+                            <div class="category-list" id="category-list">
+                            </div>
+                        </div>
+
+                        <div class="top-view">
+                            <h2 class="view-text">
+                                XEM NHIỀU NHẤT
+                            </h2>
+                            <div class="view-list">
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    <footer>
+        <div class="container">
+            <div class="alignall">
+                <div class="ft_col inf_dt">
+                    <div class="ft_col_title">
+                        Fanpage của tụi mình nè!
+                    </div>
+                    <div class="ft_col_ct">
+                        <a href="https://www.facebook.com/HocvienPTIT" target="_blank">
+                            <img class="img_page"
+                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPNJZ0mYSz5V7Jv_bV0ixN3DQw7fVoubpsrrp-ZofmZw&s"
+                                alt="">
+
+                        </a>
+                    </div>
+                </div>
+                <div class="ft_col note_dt">
+                    <div class="ft_col_title">
+                        Thông báo từ truyenoptit.com
+                    </div>
+                    <div class="ft_col_ct">
+                        Toàn bộ truyện trên website truyenoptit.com điều được sưu tầm trên internet hoặc do các nhóm
+                        dịch
+                        đăng tải và chia sẻ theo các điều khoản của website. Chúng tôi không sở hữu hay chịu trách nhiệm
+                        bất
+                        kỳ thông tin nào trên website này. Nếu nội dung có làm ảnh hưởng đến cá nhân hay tổ chức nào
+                        theo
+                        quy định của Pháp luật nước Cộng Hòa Xã Hội Chủ Nghĩa Việt Nam, khi được yêu cầu, chúng tôi sẽ
+                        xem
+                        xét và gỡ bỏ ngay lập tức.
+                    </div>
+                </div>
+                <div class="ft_col social_dt">
+                    <div class="ft_col_title">
+                        Thông tin
+                    </div>
+                    <div class="ft_col_ct">
+                        <a href="#" target="_blank" rel="noopener">Liên hệ chúng tôi</a>
+                        <br>
+                        <a href="/dieu-khoan-su-dung">
+                            Điều khoản sử dụng
+                        </a>
+                        <br>Designed by PTIT<br>
+                        Copyright © 2019 - 2024 by PTIT<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    
+
+
+
+    <!-- Nhúng Link BOOTSTRAP 4 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+        crossorigin="anonymous"></script>
+    <!-- END Nhúng Link BOOTSTRAP 4 JS -->
+
+    <!-- Nhúng link JavaScript -->
+
+    <script src="../js/favourite.js" type="module"></script>
+    <script src="../js/category.js" type="module"></script>
+    <script src="../js/topViewNovel.js" type="module"></script>
+    <script src="../js/dark-index.js" type="module"></script>
+    <!-- END Nhúng link JavaScript -->
+
+</body>
+
+</html>

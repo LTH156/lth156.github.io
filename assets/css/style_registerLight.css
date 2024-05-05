@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.registration-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    color: #999;
+}
+
+.close:hover {
+    color: #333;
+}
+
+.registration-container h1 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #187d8b;
+}
+
+.registration-container input[type="text"],
+.registration-container input[type="email"],
+.registration-container input[type="tel"],
+.registration-container input[type="password"] {
+    width: calc(100% - 0px);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 1px solid #187d8b;
+    border-radius: 25px;
+    outline: none;
+}
+
+.registration-container input[type="text"]::placeholder,
+.registration-container input[type="email"]::placeholder,
+.registration-container input[type="tel"]::placeholder,
+.registration-container input[type="password"]::placeholder {
+    color: #aaa;
+}
+
+.registration-container input[type="text"]:focus,
+.registration-container input[type="email"]:focus,
+.registration-container input[type="tel"]:focus,
+.registration-container input[type="password"]:focus {
+    background-color: rgb(232, 240, 254);
+}
+
+.registration-container input[type="text"]:not(:placeholder-shown),
+.registration-container input[type="email"]:not(:placeholder-shown),
+.registration-container input[type="tel"]:not(:placeholder-shown),
+.registration-container input[type="password"]:not(:placeholder-shown) {
+    background-color: rgb(232, 240, 254);
+    color: #161515000;
+}
+
+.registration-container input[type="submit"] {
+    width: 100%;
+    background-color: #187d8b;
+    color: white;
+    font-size: 15px;
+    padding: 12px 0;
+    margin: 20px 0 10px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s ease;
+}
+
+.registration-container input[type="submit"]:hover {
+    background-color: #156d79;
+}
+
+.registration-container input[type="submit"]:active {
+    background-color: #0b393f;
+}

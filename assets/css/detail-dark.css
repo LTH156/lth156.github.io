@@ -1,0 +1,319 @@
+/* BANNER  */
+#banner {
+    width: 100%;
+    height: auto;
+    background: url(../images/bg.png) center center no-repeat;
+    background-size: cover;
+    display: block;
+    position: relative;
+    top: 73px;
+}
+
+#banner .inner-banner {
+    width: 100%;
+}
+#banner .inner-banner .banner-child {                                                                                     
+    background-color: var(--while);
+    border: solid 1px #07c2eb;
+    opacity: 98%;
+    padding: 10px;
+    margin: 20px 0;
+    border-radius: 5px;
+    width: 100%;      
+    display: flex;                                                                                                                                                                                                                                                                         ;
+}
+
+#banner .banner-child .banner-avt {
+    width: 30%;
+    height: 500px;
+    position: relative;
+    
+}
+
+#banner .banner-child .banner-avt img {
+    width: 100%;
+    height: 100%;
+}
+
+#banner .banner-child .banner-imp {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    width: 100%;   
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+#banner .banner-child .banner-imp button {
+    padding: 5px;
+    border-radius: 6px;
+    color: var(--while);
+    font-size: 12px;
+    width: 50%;
+    font-weight: bold;
+    margin-right: 8px;
+}
+#banner .banner-child .banner-imp .share {
+    margin-left: 5%;
+    border: 3px solid #0faed1;
+    background-color: #4c67a1;
+}
+
+#banner .banner-child .banner-imp .follow {
+    margin-right: 5%;
+    border: 3px solid #de3592cc;
+    background-color: #9c1f66;
+}
+
+#banner .banner-child .banner-desc {
+    width: 70%;
+    padding: 20px 30px 0 30px;
+    padding-right: 0;
+}
+
+#banner .banner-child .banner-desc h2 {
+    font-size: 30px;
+    font-weight: bold;
+    color: var(--black);
+    margin: 10px 0px 20px 0;
+}
+
+#banner .banner-child .banner-desc .in4 {
+    margin-left: 20px; 
+    width:  98%;                                                                       
+}
+
+#banner .banner-child .banner-desc .in4 ul {
+    margin-bottom: 40px;
+}
+
+#banner .banner-child .banner-desc .in4 li {
+    font-weight: 700;
+    margin-bottom: 20px;
+
+}
+
+#banner .banner-child .banner-desc .in4 a {
+    margin-left: 20px;
+    color: #5298D2;
+}
+
+
+#banner .banner-child .banner-desc .in4 .desc {
+    color: var(--black);
+    line-height: 1.2;
+    overflow: hidden;
+    height: 130px;
+    pointer-events: none;
+
+}
+
+#banner .banner-child .banner-desc .in4 .desc iframe {
+    transform: scale(1.1);
+    margin-top: -40px;
+}
+
+/* END BANNER  */
+
+/* SECTION  */
+
+section {
+    background-color: #F8F8F8;
+    position: relative;
+    top: 73px;
+}
+
+
+section .inner-section {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+section .inner-section .content {
+    width: 74.5%;
+    margin-top: 20px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+section .content table {
+    border-collapse: collapse;
+    width: 100%;
+    text-align: center;      
+    background-color: white;
+    border: 1px solid #e3e3e3;
+    border-radius: 10px;
+
+}
+section .content table th {
+    font-weight: 700;
+    padding: 20px 0;
+    width: 30%;
+}
+section .content table td {
+    border-top: 1px solid #e3e3e3;        
+    padding: 20px 0;
+    font-weight: 600;
+}
+
+section .content table td :first-child  {
+    text-align: left;
+}
+
+section .content table  tr:last-child td {
+    border-bottom: 1px solid #e3e3e3; /* Hiển thị đường kẻ ngang cho hàng cuối cùng */
+}
+
+section table tfoot button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 1px solid #f6f6f6;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+section table tfoot .more {
+    padding: 10px;
+}
+
+section .content table a {
+    color: #2f2d2d;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+section .content table tr:last-child td button {
+    cursor: pointer;
+}
+
+section .content table tr:last-child td button:hover {
+    opacity: 0.7;
+}
+
+
+
+footer {
+    position: relative;
+    top: 73px;
+}
+/* END SECTION  */
+ @media (max-width: 1200px) {
+    #banner,
+    section,
+    footer {
+        top: 68px;
+    }
+
+    #banner .banner-child .banner-desc .in4 .desc iframe {
+        transform: scale(1.2);
+        margin-top: -4px;
+    }
+ }
+
+ @media (max-width: 992px) {
+    #banner .banner-child .banner-desc .in4 .desc iframe {
+        margin-top: -25px;
+    }                                                                                                                                       
+ }
+
+
+ @media (max-width: 768px) {
+    section .inner-section .content {
+        width: 100%;
+    }
+
+    #banner .banner-child .banner-avt {
+        width: 40%;
+        height: auto;
+    }
+
+    #banner .banner-child .banner-desc {
+        width: 60%;
+    }
+ }
+
+ @media (max-width: 576px) {
+    #banner .inner-banner .banner-child {
+        flex-direction: column;
+    }
+
+    #banner .banner-child .banner-avt,
+    #banner .banner-child .banner-desc {
+        width: 100%;
+    }
+
+ }
+/* END RESPONSIVE  */
+
+
+
+
+
+
+
+/* RESPONSIVE  */
+
+
+
+
+/* GHI DE DARK MODE  */
+section .content .list-novel-new,
+section aside .top-view .view-list,
+section aside .category-list,
+#banner .inner-banner .banner-child,
+section .content table {
+    background: #181A1B;
+    color: white;
+}
+
+section .content .item-novel-new h2, 
+span,
+section .item-novel-new .in4 .desc .chap,
+section .category-list a .category-item span,
+section aside .top-view .view-item a,
+section aside .top-view .view-item .content-novel .ct-in4 .item span,
+#banner .banner-child .banner-desc h2 {
+    color: white;
+}
+
+section .category-list a .category-item span,
+section .category-list a .category-item span:before {
+    border-bottom: 50px solid #1C1E1F;
+    opacity: 0.7;
+}
+
+section .content .list-novel-new,
+section aside .category-list,
+section .content .list-novel-new .item-novel-new,
+section aside .top-view .view-list,
+#header .inner-header-bottom .search  {
+    border: 1px solid #535050;
+}
+section {
+    background-color: #1c1e1f;
+    color: white;
+}
+section aside .top-view .view-item .content-novel .ct-in4 .xem_ngay {
+    border: 1px solid var(--bg_main);
+    background-color: #1c1e1f;
+}
+section .content table td a {
+    color: white;
+}
+#banner .inner-banner .banner-child {
+    border: solid 1px #4b585b;
+}
+
+section .content table {
+    border: 1px solid #3f3939;
+}
+
+section .content table td {
+    border-top: 1px solid #3f3939;
+}
+
+section .content table tr:last-child td {
+    border-bottom: 1px solid #3f3939;
+}
+/* GHI DE DARK MODE  */

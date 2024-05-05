@@ -1,0 +1,111 @@
+
+
+
+main {
+    position: relative;
+    top: 73px;
+}
+
+main .control-bar {
+    background: #000;    
+    padding: 20px 0;    
+    width: 100%;     
+    border-bottom: 1px solid white;
+}
+ 
+main .bar {
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    margin-left: 10%;
+    margin-right: 10%;
+    font-size: 24px;
+    position: relative;
+}
+
+main .bar li {
+    cursor: pointer;
+}
+
+.kix-page-paginated {
+    outline: none !important;
+}
+footer {
+    position: relative;
+    top: 73px;
+}
+
+
+main .bar .list-chapter ul {
+    /* display: none; */
+    position: absolute;
+    top: 46px;
+    background-color: #DFDFDF;
+    color: white;
+    max-width: 1200px;
+    width: 100%;
+    border-radius: 6px;
+}
+
+main .bar .list-chapter ul li {
+    padding: 15px 10px;
+    border-bottom: 1px solid #d8d5d5;
+    display: flex;
+    align-items: center;
+    transition: all 0.1s ease-in;
+}
+
+main .bar .list-chapter ul li:hover {
+    background-color: var(--bg_main);
+}
+
+main .bar .list-chapter ul li:hover a {
+    color: var(--while);
+} 
+
+
+main .bar .list-chapter ul li a {
+    color: #181a1b;
+    font-size: 12px;
+    text-transform: capitalize;
+    text-decoration: solid;
+}
+@media (max-width: 1200px) {
+    main, 
+    footer {
+        top: 68px;
+    }
+}
+
+/* GHI DE DARK MODE  */
+
+.content {
+    display: flex;
+    justify-content: center;
+    background-color: #181a1b;
+}
+
+.content iframe {
+    width: 50% !important;
+}
+
+@media (max-width: 1200px) {
+    .content iframe {
+        width: 60% !important;
+    }
+}
+
+
+@media (max-width: 767.98px) {
+    .content iframe {
+        width: 80% !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .content iframe {
+        width: 100% !important;
+    }
+}
+/* GHI DE DARK MODE  */
