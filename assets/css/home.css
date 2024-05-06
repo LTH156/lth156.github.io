@@ -269,10 +269,13 @@ section .image-container .desc-in .item {
 
 section .image-container .desc-in .chap {
     margin-left: 20%;
+    margin-bottom: 5px;
 }
 
 section .image-container .desc-in .view {
     margin-right: 20%;
+    margin-bottom: 5px;
+
 }
 
 section .content .item-novel-new h2 {
@@ -324,6 +327,16 @@ section .item-novel-new .in4 .desc .item {
 
 section .item-novel-new .in4 .desc .chap {
     margin-left: 10%;
+    display: flex;
+    /* text-overflow: ellipsis; */
+    /* margin-right: 10%; */
+    width: 50%;
+}
+
+section .item-novel-new .in4 .desc .chap span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;                                                                                                                               
 }
 
 section .item-novel-new .in4 .desc .view {
@@ -471,7 +484,7 @@ footer {
         z-index: 1;
     }
 
-    section aside .top-view .view-item a {
+    section aside .top-view .view-item>a {
         text-align: center;
         position: absolute;
         top: 219px;

@@ -131,20 +131,20 @@ renderNovel().then(async () => {
 document.addEventListener("DOMContentLoaded", setupSearch);
 
 if (presentDarkMode) {
-    theme.href = "../assets/css/detail-dark.css";
+    theme.href = "../assets/css/detail.css";
     // Xử lý khi darkMode là true
 } else {
     // Xử lý khi darkMode là false
-    theme.href = "../assets/css/detail.css";
+    theme.href = "../assets/css/detail-dark.css";
 }
 document.addEventListener('darkModeChange', function (event) {
     const { darkMode } = event.detail;
     // Thực hiện xử lý dựa trên giá trị darkMode
     if (darkMode) {
-        theme.href = "../assets/css/detail-dark.css";
+        theme.href = "../assets/css/detail.css";
         // Xử lý khi darkMode là true
     } else {
         // Xử lý khi darkMode là false
-        theme.href = "../assets/css/detail.css";
+        theme.href = "../assets/css/detail-dark.css";
     }
 });

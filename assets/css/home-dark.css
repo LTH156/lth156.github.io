@@ -268,11 +268,11 @@ section .image-container .desc-in .item {
 }
 
 section .image-container .desc-in .chap {
-    margin-left: 20%;
+    margin-left: 10%;
 }
 
 section .image-container .desc-in .view {
-    margin-right: 20%;
+    margin-right: 10%;
 }
 
 section .content .item-novel-new h2 {
@@ -470,7 +470,7 @@ footer {
         z-index: 1;
     }
 
-    section aside .top-view .view-item a {
+    section aside .top-view .view-item>a {
         text-align: center;
         position: absolute;
         top: 219px;
@@ -598,7 +598,9 @@ section {
     color: white;
 
 }
-
+.fa-regular {
+    color: white;
+} 
 section .content .list-novel-new,
 section aside .top-view .view-list,
 section aside .category-list {

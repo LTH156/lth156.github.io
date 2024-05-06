@@ -95,20 +95,20 @@ const theme = document.querySelector("#theme-link");
 
 const presentDarkMode=localStorage.getItem("dark-mode")
 if (presentDarkMode) {
-    theme.href = "../assets/css/read-dark.css";
+    theme.href = "../assets/css/read.css";
     // Xử lý khi darkMode là true
 } else {
     // Xử lý khi darkMode là false
-    theme.href = "../assets/css/read.css";
+    theme.href = "../assets/css/read-dark.css";
 }
 document.addEventListener('darkModeChange', function(event) {
     const { darkMode } = event.detail;
     // Thực hiện xử lý dựa trên giá trị darkMode
     if (darkMode) {
-        theme.href = "../assets/css/read-dark.css";
+        theme.href = "../assets/css/read.css";
         // Xử lý khi darkMode là true
     } else {
         // Xử lý khi darkMode là false
-        theme.href = "../assets/css/read.css";
+        theme.href = "../assets/css/read-dark.css";
     }
 });

@@ -17,11 +17,11 @@ const renderTopViewNovel = async () => {
                     <div class="content-novel">
                         <div class="ct-in4">
                             <div class="view item">
-                                <i class="fa-regular fa-heart"></i>
+                            <i class="fa-regular fa-eye"></i>
                                 <span>${novel.view} lượt xem</span>
                             </div>
                             <div class="chap item">
-                                <i class="fa-regular fa-heart"></i>
+                            <i class="fa-solid fa-user-plus"></i>
                                 <span>${novel.followed} theo dõi</span>
                             </div>
                             <a class="xem_ngay item" href = './detail.html?id=${novel._id}'>XEM NGAY</a>
@@ -56,20 +56,21 @@ const renderSlide = async () => {
                     <h4 class="title">${novel.novelName}</h4>
                     <div class="in4">
                         <div class="chap item">
-                            <i class="fa-regular fa-heart"></i>
+                        <i class="fa-solid fa-book"></i>
                             <span>${novel.episodes} tập</span>
                         </div>
                         <div class="view item">
-                            <i class="fa-regular fa-heart"></i>
-                            <span>${novel.view} lượt xem</span>
+                        <i class="fa-regular fa-eye"></i>
+                            <span>${novel.view}</span>
                         </div>
                         <div class="calendar item">
-                            <i class="fa-regular fa-heart"></i>
+                        
+                        <i class="fa-regular fa-user"></i>
                             <span>${novel.authorName}</span>
                         </div>
                         <div class="follow item">
-                            <i class="fa-regular fa-heart"></i>
-                            <span>${novel.followed} người theo dõi</span>
+                        <i class="fa-solid fa-user-plus"></i>
+                            <span>${novel.followed}</span>
                         </div>
                     </div>
                 </div>

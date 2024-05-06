@@ -18,12 +18,12 @@ const renderNovel = (data) => {
                         <img src="${novel.descriptionImage}" alt="">
                         <div class="desc-in">
                             <div class="chap item">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${novel.followed} người theo dõi</span>
+                            <i class="fa-solid fa-user-plus"></i>
+                                <span>${novel.followed}</span>
                             </div>
                             <div class="view item">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${novel.view} lượt xem</span>
+                            <i class="fa-regular fa-eye"></i>
+                                <span>${novel.view}</span>
                             </div>
                         </div>
                     </div>
@@ -31,11 +31,11 @@ const renderNovel = (data) => {
                         <h2 class="title">${novel.novelName}</h2>
                         <div class="desc">
                             <div class="chap item">
-                                <i class="fa-regular fa-heart"></i>
+                            <i class="fa-regular fa-user"></i>
                                 <span>${novel.authorName}</span>
                             </div>
                             <div class="view item">
-                                <i class="fa-regular fa-heart"></i>
+                            <i class="fa-solid fa-book"></i>
                                 <span>${novel.episodes} tập</span>
                             </div>
                         </div>
@@ -126,16 +126,26 @@ document.addEventListener("DOMContentLoaded", setupSearch);
 const theme = document.querySelector("#theme-link");    
 
 const presentDarkMode=localStorage.getItem("dark-mode")
+// HEAD
+if (presentDarkMode) {
+    theme.href = "../assets/css/home.css";
+    // Xử lý khi darkMode là true
+} else {
+    // Xử lý khi darkMode là false
+    theme.href = "../assets/css/home-dark.css";
+}
+// =======
 
+// >>>>>>> c62f64b8349f0f75cdde4427d054d5446f7c9306
 document.addEventListener('darkModeChange', function(event) {
     const { darkMode } = event.detail;
     // Thực hiện xử lý dựa trên giá trị darkMode
     if (darkMode) {
-        theme.href = "../assets/css/home-dark.css";
+        theme.href = "../assets/css/home.css";
         // Xử lý khi darkMode là true
     } else {
         // Xử lý khi darkMode là false
-        theme.href = "../assets/css/home.css";
+        theme.href = "../assets/css/home-dark.css";
     }
 });
 

@@ -46,6 +46,7 @@ main .bar .list-chapter ul {
     max-width: 1200px;
     width: 100%;
     border-radius: 6px;
+    font-family: "Nunito", sans-serif ;
 }
 
 main .bar .list-chapter ul li {

@@ -17,12 +17,12 @@ const renderNovel = (data) => {
                         <img src="${novel.descriptionImage}" alt="">
                         <div class="desc-in">
                             <div class="chap item">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${novel.followed} người theo dõi</span>
+                            <i class="fa-solid fa-user-plus"></i>
+                                <span>${novel.followed}</span>
                             </div>
                             <div class="view item">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${novel.view} lượt xem</span>
+                            <i class="fa-regular fa-eye"></i>
+                                <span>${novel.view}</span>
                             </div>
                         </div>
                     </div>
@@ -30,12 +30,12 @@ const renderNovel = (data) => {
                         <h2 class="title">${novel.novelName}</h2>
                         <div class="desc">
                             <div class="chap item">
-                                <i class="fa-regular fa-heart"></i>
+                            <i class="fa-solid fa-user-plus"></i>
                                 <span>${novel.authorName}</span>
                             </div>
                             <div class="view item">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${novel.episodes} tập</span>
+                            <i class="fa-solid fa-book"></i>
+                                <span>${novel.episodes}Tập</span>
                             </div>
                         </div>
                     </div>
