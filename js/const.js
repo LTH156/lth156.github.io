@@ -112,7 +112,7 @@ export const getNextChapter = async (chapterId, novelCode) => {
     return response.json();
 }
 export const searchNovel = async (description) => {
-    const response = await fetch(`http://localhost:3535/novels/search-novel`, {
+    const response = await fetch(`${url}/novels/search-novel`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
