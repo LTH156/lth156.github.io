@@ -21,6 +21,30 @@ body {
   padding: 50px 0px;
 }
 
+body {
+  background-image: url('./Tlin.jpg'), url("./present.jpg"); /* Đường dẫn tới hình ảnh nền */
+  background-size: contain, contain; /* Phủ kín màn hình, giữ nguyên tỉ lệ */
+  background-repeat: no-repeat, no-repeat; /* Không lặp lại hình ảnh */
+  height: 100vh; /* Chiều cao của body bằng với chiều cao viewport */
+  margin: 0; /* Xóa lề mặc định */
+  background-position: right, left;
+}
+
+img {
+  width: 100%;       /* Chỉnh chiều rộng */
+  height: auto;      /* Chiều cao tự động theo tỉ lệ */
+  border: none;      /* Không viền */
+  display: block;    /* Hiển thị dạng block để tránh khoảng trắng dưới ảnh */
+  margin: 0 auto;    /* Căn giữa nếu cần */
+}
+
+@media (max-width: 768px) {
+  img {
+      width: 100%;
+      height: auto;
+  }
+}
+
 .night {
   position: fixed;
   left: 50%;
