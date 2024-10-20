@@ -19,9 +19,6 @@ body {
   overflow: hidden;
   perspective: 1000px;
   padding: 50px 0px;
-}
-
-body {
   background-image: url('./Tlin.jpg'), url("./present.jpg"); /* Đường dẫn tới hình ảnh nền */
   background-size: contain, contain; /* Phủ kín màn hình, giữ nguyên tỉ lệ */
   background-repeat: no-repeat, no-repeat; /* Không lặp lại hình ảnh */
