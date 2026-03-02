@@ -414,6 +414,31 @@
             width: auto;
             font-size: .8rem;
         }
+
+        .btn-sample {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            width: 100%;
+            padding: .65rem 1rem;
+            margin-top: .85rem;
+            border: 1.5px dashed rgba(167, 139, 250, .35);
+            border-radius: 10px;
+            background: rgba(167, 139, 250, .06);
+            color: var(--primary2);
+            font-family: 'Inter', sans-serif;
+            font-size: .85rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+
+        .btn-sample:hover {
+            background: rgba(167, 139, 250, .12);
+            border-color: rgba(167, 139, 250, .6);
+        }
     </style>
 </head>
 
@@ -442,10 +467,14 @@
             </div>
         </div>
 
-        <p class="hint">
-            Chưa có file mẫu?
-            <a href="./assets/danh_sach_mau.xlsx" download id="sample-link">Tải xuống danh_sach_mau.xlsx</a>
-        </p>
+        <a href="./assets/danh_sach_mau.xlsx" download id="sample-link" class="btn-sample">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            Tải file Excel mẫu
+        </a>
 
         <!-- Student preview list -->
         <div id="student-list">
