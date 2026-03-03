@@ -91,6 +91,12 @@ LABEL_MAP = {
     "giai đoạn 3":                  "GD3_TIEN",
     "giai đoạn 4":                  "GD4_TIEN",
     "giai đoạn 5":                  "GD5_TIEN",
+    # Ngày thanh toán
+    "ngày thanh toán 1":             "GD1_NGAY",
+    "ngày thanh toán 2":             "GD2_NGAY",
+    "ngày thanh toán 3":             "GD3_NGAY",
+    "ngày thanh toán 4":             "GD4_NGAY",
+    "ngày thanh toán 5":             "GD5_NGAY",
 }
 # ============================================================
 
@@ -116,16 +122,37 @@ def format_number(n):
 
 
 def read_excel_sheets(excel_file):
-    wb = openpyxl.load_workbook(excel_file)
+    wb = openpyxl.load_workbook(excel_file, data_only=False)
     students = []
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
         info = {"_sheet": sheet_name, "_giai_doan": []}
-        for row in ws.iter_rows(values_only=True):
-            if not row[0]:
+        for row in ws.iter_rows(values_only=False):
+            if not row[0] or not row[0].value:
                 continue
-            label = str(row[0]).strip()
-            value = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ""
+            label = str(row[0].value).strip()
+            
+            # Get formatted value (what user sees in Excel) or raw value
+            cell = row[1] if len(row) > 1 else None
+            if cell and cell.value is not None:
+                # Try to get formatted value first
+                value = cell.value
+                if hasattr(cell, 'number_format') and cell.number_format and cell.number_format != 'General':
+                    # Cell has formatting - try to use the formatted display value
+                    try:
+                        from openpyxl.styles.numbers import FORMAT_DATE_XLSX14, FORMAT_DATE_DATETIME
+                        from datetime import datetime
+                        if isinstance(value, datetime):
+                            value = value.strftime("%d/%m/%Y")
+                        else:
+                            value = str(value)
+                    except:
+                        value = str(value)
+                else:
+                    value = str(value).strip()
+            else:
+                value = ""
+            
             key = LABEL_MAP.get(label.lower())
             if key:
                 info[key] = value
@@ -143,6 +170,7 @@ def read_excel_sheets(excel_file):
         if info["_giai_doan"]:
             tong = sum(v for _, v in info["_giai_doan"])
             info["TONG_TIEN"] = format_number(tong)
+            info["SO_GIAI_DOAN"] = str(len(info["_giai_doan"]))
             for gd_num, val in info["_giai_doan"]:
                 info[f"GD{gd_num}_TIEN"] = format_number(val)
 
@@ -240,16 +268,11 @@ def handle_payment_list(doc, giai_doan_list):
 #  XỬ LÝ BẢNG GIAI ĐOẠN ĐỘNG (chỉ file Thanh Lý)
 # ──────────────────────────────────────────────
 
-def handle_payment_table(doc, giai_doan_list):
+def handle_payment_table(doc, giai_doan_list, info):
     """
-    Tìm bảng thanh toán (có ô 'Giai đoạn'), xây lại các data rows
-    theo đúng số giai đoạn trong giai_doan_list = [(1, 28080000), (2, 38400000), ...]
-
-    Cấu trúc bảng: 4 cột
-      [Giai đoạn] | [Số tiền] | [Trạng thái] | [Ngày thanh toán]
-    Row 0 = header (giữ nguyên)
-    Row 1..N-1 = data giai đoạn (tái tạo)
-    Row N = Tổng cộng (giữ nguyên, chỉ update số)
+    Template có sẵn rows với placeholders {{GD1_TIEN}}, {{GD1_NGAY}}, etc.
+    Xóa các rows không dùng (ví dụ nếu chỉ có 2 giai đoạn, xóa rows GD3, GD4, GD5).
+    Placeholders sẽ được replace bởi replace_all() sau này.
     """
     if not giai_doan_list:
         return
@@ -272,77 +295,20 @@ def handle_payment_table(doc, giai_doan_list):
         return
 
     tbl_elem = payment_table._tbl
-
-    # Lấy tất cả rows hiện tại
     all_tr = tbl_elem.findall(qn("w:tr"))
+    
+    if len(all_tr) < 3:
+        return
+    
     header_tr = all_tr[0]
-    total_tr  = all_tr[-1]
-
-    # Xoá tất cả data rows cũ (giữ header và total)
-    for tr in all_tr[1:-1]:
-        tbl_elem.remove(tr)
-
-    # Clone 1 data row mẫu từ row giai đoạn 1 cũ (giờ đã bị xoá, dùng deepcopy trước khi xoá)
-    # → ta sẽ build từ total_tr vì nó có đủ 4 ô, chỉ cần clone và clean
-    def make_data_row(gd_num, amount_str, template_tr):
-        """Tạo một <w:tr> mới từ template_tr với nội dung giai đoạn."""
-        new_tr = deepcopy(template_tr)
-        cells = new_tr.findall(qn("w:tc"))
-        if len(cells) < 2:
-            return new_tr
-
-        # Hàm set text vào ô, giữ rPr
-        def set_cell_text(tc, text, bold=False):
-            for p in tc.findall(qn("w:p")):
-                tc.remove(p)
-            # Lấy rPr mẫu từ total_tr ô cùng vị trí nếu có
-            new_p = etree.SubElement(tc, qn("w:p"))
-            pPr = etree.SubElement(new_p, qn("w:pPr"))
-            sp = etree.SubElement(pPr, qn("w:spacing"))
-            sp.set(qn("w:line"), "276"); sp.set(qn("w:lineRule"), "auto")
-            ol = etree.SubElement(pPr, qn("w:outlineLvl"))
-            ol.set(qn("w:val"), "2")
-            rPr_p = etree.SubElement(pPr, qn("w:rPr"))
-            fnt = etree.SubElement(rPr_p, qn("w:rFonts"))
-            for attr in ["w:ascii","w:eastAsia","w:hAnsi","w:cs"]:
-                fnt.set(qn(attr), "Times New Roman")
-            sz = etree.SubElement(rPr_p, qn("w:sz")); sz.set(qn("w:val"), "28")
-            szcs = etree.SubElement(rPr_p, qn("w:szCs")); szcs.set(qn("w:val"), "28")
-
-            r = etree.SubElement(new_p, qn("w:r"))
-            rPr = etree.SubElement(r, qn("w:rPr"))
-            fnt2 = etree.SubElement(rPr, qn("w:rFonts"))
-            for attr in ["w:ascii","w:eastAsia","w:hAnsi","w:cs"]:
-                fnt2.set(qn(attr), "Times New Roman")
-            if bold:
-                etree.SubElement(rPr, qn("w:b"))
-                etree.SubElement(rPr, qn("w:bCs"))
-            sz2 = etree.SubElement(rPr, qn("w:sz")); sz2.set(qn("w:val"), "28")
-            szcs2 = etree.SubElement(rPr, qn("w:szCs")); szcs2.set(qn("w:val"), "28")
-            t = etree.SubElement(r, qn("w:t"))
-            t.text = text
-            if text.startswith(" ") or text.endswith(" "):
-                t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
-
-        set_cell_text(cells[0], f"Giai đoạn {gd_num}")
-        set_cell_text(cells[1], amount_str)
-        set_cell_text(cells[2], "Đã thanh toán")
-        set_cell_text(cells[3], "")
-        return new_tr
-
-    # Chèn data rows mới (trước total_tr)
-    tong = sum(v for _, v in giai_doan_list)
-    for gd_num, amount in giai_doan_list:
-        new_tr = make_data_row(gd_num, format_number(amount), total_tr)
-        tbl_elem.insert(list(tbl_elem).index(total_tr), new_tr)
-
-    # Cập nhật tổng trong total_tr
-    total_cells = total_tr.findall(qn("w:tc"))
-    if len(total_cells) >= 2:
-        for p in total_cells[1].findall(qn("w:p")):
-            for r in p.findall(qn("w:r")):
-                for t in r.findall(qn("w:t")):
-                    t.text = format_number(tong)
+    total_tr = all_tr[-1]
+    data_rows = all_tr[1:-1]
+    
+    num_gd = len(giai_doan_list)
+    
+    # Remove rows for unused giai doan (keep only first num_gd data rows)
+    for i in range(num_gd, len(data_rows)):
+        tbl_elem.remove(data_rows[i])
 
 
 # ──────────────────────────────────────────────
@@ -354,7 +320,7 @@ def fill_doc(template_path, info, is_thanh_ly=False):
     replacements = {k: v for k, v in info.items() if not k.startswith("_")}
 
     if is_thanh_ly and info.get("_giai_doan"):
-        handle_payment_table(doc, info["_giai_doan"])
+        handle_payment_table(doc, info["_giai_doan"], info)
     elif not is_thanh_ly and info.get("_giai_doan"):
         handle_payment_list(doc, info["_giai_doan"])
 

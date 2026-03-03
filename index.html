@@ -9,451 +9,74 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <!-- JSZip – unzip/rezip .docx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- SheetJS – read .xlsx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- FileSaver – trigger download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #0d0f1a;
-            --surface: rgba(255, 255, 255, .05);
-            --border: rgba(255, 255, 255, .1);
-            --primary: #6c63ff;
-            --primary2: #a78bfa;
-            --green: #22d3a6;
-            --red: #f87171;
-            --yellow: #fbbf24;
-            --text: #e2e8f0;
-            --text-muted: #94a3b8;
-            --radius: 16px;
-            --shadow: 0 8px 32px rgba(0, 0, 0, .4);
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem 4rem;
-            background-image:
-                radial-gradient(ellipse at 20% 20%, rgba(108, 99, 255, .18) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 80%, rgba(167, 139, 250, .12) 0%, transparent 60%);
-        }
-
-        /* ── Header ── */
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        header .badge {
-            display: inline-block;
-            font-size: .75rem;
-            font-weight: 600;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--primary2);
-            background: rgba(108, 99, 255, .15);
-            border: 1px solid rgba(108, 99, 255, .3);
-            border-radius: 99px;
-            padding: .3rem .9rem;
-            margin-bottom: 1rem;
-        }
-
-        h1 {
-            font-size: clamp(1.6rem, 4vw, 2.6rem);
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff 30%, var(--primary2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        header p {
-            color: var(--text-muted);
-            margin-top: .5rem;
-            font-size: .95rem;
-        }
-
-        /* ── Card ── */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            width: 100%;
-            max-width: 680px;
-        }
-
-        /* ── Drop Zone ── */
-        #dropzone {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 3rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color .25s, background .25s;
-            position: relative;
-        }
-
-        #dropzone.drag-over {
-            border-color: var(--primary);
-            background: rgba(108, 99, 255, .08);
-        }
-
-        #dropzone svg {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 1rem;
-            color: var(--primary2);
-        }
-
-        #dropzone h3 {
-            font-size: 1.05rem;
-            margin-bottom: .4rem;
-        }
-
-        #dropzone p {
-            font-size: .85rem;
-            color: var(--text-muted);
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
-            font-size: .8rem;
-            background: rgba(34, 211, 166, .1);
-            color: var(--green);
-            border: 1px solid rgba(34, 211, 166, .25);
-            border-radius: 99px;
-            padding: .25rem .75rem;
-            margin-top: 1rem;
-        }
-
-        /* ── Sample link ── */
-        .hint {
-            text-align: center;
-            font-size: .82rem;
-            color: var(--text-muted);
-            margin-top: 1rem;
-        }
-
-        .hint a {
-            color: var(--primary2);
-            font-weight: 500;
-            text-decoration: none;
-        }
-
-        .hint a:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Divider ── */
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 1.5rem 0;
-        }
-
-        /* ── Student List ── */
-        #student-list {
-            display: none;
-        }
-
-        #student-list h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .student-row {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            padding: .65rem .9rem;
-            background: rgba(255, 255, 255, .03);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            margin-bottom: .5rem;
-            transition: background .2s;
-        }
-
-        .student-row:hover {
-            background: rgba(255, 255, 255, .06);
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            background: var(--text-muted);
-        }
-
-        .dot.ok {
-            background: var(--green);
-            box-shadow: 0 0 6px var(--green);
-        }
-
-        .dot.error {
-            background: var(--red);
-            box-shadow: 0 0 6px var(--red);
-        }
-
-        .dot.pending {
-            background: var(--yellow);
-        }
-
-        .student-name {
-            font-size: .9rem;
-            flex: 1;
-        }
-
-        .student-meta {
-            font-size: .78rem;
-            color: var(--text-muted);
-        }
-
-        /* ── Summary bar ── */
-        #summary {
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: .75rem;
-            font-size: .82rem;
-            color: var(--text-muted);
-        }
-
-        #summary.visible {
-            display: flex;
-        }
-
-        /* ── Buttons ── */
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .5rem;
-            width: 100%;
-            padding: .85rem 1.5rem;
-            border: none;
-            border-radius: 10px;
-            font-family: 'Inter', sans-serif;
-            font-size: .95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity .2s, transform .15s, box-shadow .2s;
-        }
-
-        .btn:active {
-            transform: scale(.97);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary2));
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(108, 99, 255, .4);
-            margin-top: 1.5rem;
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 6px 28px rgba(108, 99, 255, .55);
-        }
-
-        .btn-primary:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: .82rem;
-            padding: .6rem 1rem;
-            margin-top: .75rem;
-            width: auto;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--text-muted);
-            color: var(--text);
-        }
-
-        /* ── Log console ── */
-        #log {
-            display: none;
-            background: #080a13;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-family: 'Fira Mono', 'Menlo', monospace;
-            font-size: .78rem;
-            color: var(--text-muted);
-            max-height: 220px;
-            overflow-y: auto;
-        }
-
-        #log .line-ok {
-            color: var(--green);
-        }
-
-        #log .line-err {
-            color: var(--red);
-        }
-
-        #log .line-info {
-            color: var(--primary2);
-        }
-
-        /* ── Progress bar ── */
-        #progress-wrap {
-            display: none;
-            margin-top: 1.25rem;
-        }
-
-        #progress-bar-bg {
-            background: rgba(255, 255, 255, .07);
-            border-radius: 99px;
-            height: 6px;
-            overflow: hidden;
-        }
-
-        #progress-bar {
-            height: 100%;
-            border-radius: 99px;
-            background: linear-gradient(90deg, var(--primary), var(--primary2));
-            width: 0%;
-            transition: width .3s ease;
-        }
-
-        #progress-label {
-            text-align: right;
-            font-size: .75rem;
-            color: var(--text-muted);
-            margin-top: .4rem;
-        }
-
-        /* ── Download success ── */
-        #download-card {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        #download-card .icon-circle {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: rgba(34, 211, 166, .15);
-            border: 2px solid rgba(34, 211, 166, .4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            animation: popIn .4s cubic-bezier(.34, 1.56, .64, 1) forwards;
-        }
-
-        @keyframes popIn {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        #download-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: .4rem;
-        }
-
-        #download-card p {
-            font-size: .85rem;
-            color: var(--text-muted);
-        }
-
-        .btn-download {
-            margin-top: 1.25rem;
-            background: linear-gradient(135deg, var(--green), #059669);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(34, 211, 166, .35);
-        }
-
-        .btn-reset {
-            margin-top: .5rem;
-            width: auto;
-            font-size: .8rem;
-        }
-
-        .btn-sample {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .5rem;
-            width: 100%;
-            padding: .65rem 1rem;
-            margin-top: .85rem;
-            border: 1.5px dashed rgba(167, 139, 250, .35);
-            border-radius: 10px;
-            background: rgba(167, 139, 250, .06);
-            color: var(--primary2);
-            font-family: 'Inter', sans-serif;
-            font-size: .85rem;
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background .2s, border-color .2s;
-        }
-
-        .btn-sample:hover {
-            background: rgba(167, 139, 250, .12);
-            border-color: rgba(167, 139, 250, .6);
-        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--bg:#0d0f1a;--surface:rgba(255,255,255,.05);--border:rgba(255,255,255,.1);--primary:#6c63ff;--primary2:#a78bfa;--green:#22d3a6;--red:#f87171;--yellow:#fbbf24;--text:#e2e8f0;--text-muted:#94a3b8;--radius:16px;--shadow:0 8px 32px rgba(0,0,0,.4)}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 4rem;background-image:radial-gradient(ellipse at 20% 20%,rgba(108,99,255,.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(167,139,250,.12) 0%,transparent 60%)}
+        header{text-align:center;margin-bottom:3rem}
+        header .badge{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--primary2);background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.3);border-radius:99px;padding:.3rem .9rem;margin-bottom:1rem}
+        h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;background:linear-gradient(135deg,#fff 30%,var(--primary2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        header p{color:var(--text-muted);margin-top:.5rem;font-size:.95rem}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow);padding:2rem;width:100%;max-width:680px}
+        #dropzone{border:2px dashed var(--border);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color .25s,background .25s;position:relative}
+        #dropzone.drag-over{border-color:var(--primary);background:rgba(108,99,255,.08)}
+        #dropzone svg{width:48px;height:48px;margin-bottom:1rem;color:var(--primary2)}
+        #dropzone h3{font-size:1.05rem;margin-bottom:.4rem}
+        #dropzone p{font-size:.85rem;color:var(--text-muted)}
+        #file-input{display:none}
+        .chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;background:rgba(34,211,166,.1);color:var(--green);border:1px solid rgba(34,211,166,.25);border-radius:99px;padding:.25rem .75rem;margin-top:1rem}
+        .divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+        #student-list{display:none}
+        #student-list h2{font-size:1rem;font-weight:600;margin-bottom:1rem}
+        .student-row{display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem;transition:background .2s}
+        .student-row:hover{background:rgba(255,255,255,.06)}
+        .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--text-muted)}
+        .dot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+        .dot.error{background:var(--red);box-shadow:0 0 6px var(--red)}
+        .dot.pending{background:var(--yellow)}
+        .student-name{font-size:.9rem;flex:1}
+        .student-meta{font-size:.78rem;color:var(--text-muted)}
+        #summary{display:none;justify-content:space-between;align-items:center;margin-top:.75rem;font-size:.82rem;color:var(--text-muted)}
+        #summary.visible{display:flex}
+        .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.85rem 1.5rem;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .15s,box-shadow .2s}
+        .btn:active{transform:scale(.97)}
+        .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;box-shadow:0 4px 20px rgba(108,99,255,.4);margin-top:1.5rem}
+        .btn-primary:hover{box-shadow:0 6px 28px rgba(108,99,255,.55)}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:.82rem;padding:.6rem 1rem;margin-top:.75rem;width:auto}
+        .btn-outline:hover{border-color:var(--text-muted);color:var(--text)}
+        #log{display:none;background:#080a13;border:1px solid var(--border);border-radius:10px;padding:1rem;margin-top:1rem;font-family:'Fira Mono','Menlo',monospace;font-size:.78rem;color:var(--text-muted);max-height:220px;overflow-y:auto}
+        #log .line-ok{color:var(--green)}
+        #log .line-err{color:var(--red)}
+        #log .line-info{color:var(--primary2)}
+        #progress-wrap{display:none;margin-top:1.25rem}
+        #progress-bar-bg{background:rgba(255,255,255,.07);border-radius:99px;height:6px;overflow:hidden}
+        #progress-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--primary2));width:0%;transition:width .3s ease}
+        #progress-label{text-align:right;font-size:.75rem;color:var(--text-muted);margin-top:.4rem}
+        #download-card{display:none;flex-direction:column;align-items:center;padding:2rem;text-align:center}
+        #download-card .icon-circle{width:64px;height:64px;border-radius:50%;background:rgba(34,211,166,.15);border:2px solid rgba(34,211,166,.4);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:1rem;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards}
+        @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+        #download-card h3{font-size:1.1rem;margin-bottom:.4rem}
+        #download-card p{font-size:.85rem;color:var(--text-muted)}
+        .btn-download{margin-top:1.25rem;background:linear-gradient(135deg,var(--green),#059669);color:#fff;box-shadow:0 4px 20px rgba(34,211,166,.35)}
+        .btn-reset{margin-top:.5rem;width:auto;font-size:.8rem}
+        .btn-sample{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.65rem 1rem;margin-top:.85rem;border:1.5px dashed rgba(167,139,250,.35);border-radius:10px;background:rgba(167,139,250,.06);color:var(--primary2);font-family:'Inter',sans-serif;font-size:.85rem;font-weight:500;text-decoration:none;cursor:pointer;transition:background .2s,border-color .2s}
+        .btn-sample:hover{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.6)}
     </style>
 </head>
 
 <body>
 
     <header>
-        <div class="badge">v3 · Auto</div>
+        <div class="badge">v4 · Auto</div>
         <h1>Sinh Biên Bản Nghiệm Thu &amp; Thanh Lý</h1>
         <p>Upload file Excel danh sách · Hệ thống tự xử lý và xuất file Word</p>
     </header>
 
-    <!-- ─────── Main card ─────── -->
     <div class="card" id="main-card">
-
-        <!-- Drop zone -->
         <div id="dropzone">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -468,15 +91,13 @@
         </div>
 
         <a href="./assets/danh_sach_mau.xlsx" download id="sample-link" class="btn-sample">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             </svg>
             Tải file Excel mẫu
         </a>
 
-        <!-- Student preview list -->
         <div id="student-list">
             <hr class="divider" />
             <h2 id="student-count-label">Danh sách học viên</h2>
@@ -487,24 +108,18 @@
             </div>
         </div>
 
-        <!-- Generate button -->
         <button class="btn btn-primary" id="generate-btn" disabled>
             <span>⚡</span> Tạo biên bản
         </button>
 
-        <!-- Progress -->
         <div id="progress-wrap">
-            <div id="progress-bar-bg">
-                <div id="progress-bar"></div>
-            </div>
-            <div id="progress-label" id="progress-label">0 / 0</div>
+            <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+            <div id="progress-label">0 / 0</div>
         </div>
 
-        <!-- Log -->
         <div id="log"></div>
     </div>
 
-    <!-- ─────── Download card ─────── -->
     <div class="card" id="download-card">
         <div class="icon-circle">✅</div>
         <h3 id="done-title">Xong!</h3>
@@ -515,7 +130,7 @@
 
     <script>
         // ══════════════════════════════════════════════════
-        //  LABEL MAP (mirror Python LABEL_MAP)
+        //  LABEL MAP
         // ══════════════════════════════════════════════════
         const LABEL_MAP = {
             "số hợp đồng": "SO_HOP_DONG",
@@ -544,6 +159,11 @@
             "giai đoạn 3": "GD3_TIEN",
             "giai đoạn 4": "GD4_TIEN",
             "giai đoạn 5": "GD5_TIEN",
+            "ngày thanh toán 1": "GD1_NGAY",
+            "ngày thanh toán 2": "GD2_NGAY",
+            "ngày thanh toán 3": "GD3_NGAY",
+            "ngày thanh toán 4": "GD4_NGAY",
+            "ngày thanh toán 5": "GD5_NGAY",
         };
 
         // ══════════════════════════════════════════════════
@@ -561,32 +181,52 @@
         function sanitize(name) {
             return String(name).replace(/[\\/:*?"<>|]/g, '_').trim();
         }
-        function xmlEscape(s) {
-            return String(s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
+
+        // Convert Excel serial date number to dd/mm/yyyy string
+        function excelDateToString(val) {
+            if (typeof val === 'number' && val > 10000) {
+                // Excel date serial: days since 1900-01-00 (with Lotus 1-2-3 leap year bug)
+                const date = new Date((val - 25569) * 86400 * 1000);
+                const d = String(date.getUTCDate()).padStart(2, '0');
+                const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const y = date.getUTCFullYear();
+                return `${d}/${m}/${y}`;
+            }
+            return null;
         }
 
         // ══════════════════════════════════════════════════
         //  READ EXCEL SHEETS
         // ══════════════════════════════════════════════════
         function readExcelSheets(arrayBuffer) {
-            const wb = XLSX.read(arrayBuffer, { type: 'array' });
+            const wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
             const students = [];
             for (const sheetName of wb.SheetNames) {
                 const ws = wb.Sheets[sheetName];
-                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
                 const info = { _sheet: sheetName, _giai_doan: [] };
 
-                for (const row of rows) {
-                    if (!row[0]) continue;
-                    const label = String(row[0]).trim();
-                    const value = row[1] != null ? String(row[1]).trim() : '';
+                const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+                for (let R = range.s.r; R <= range.e.r; R++) {
+                    const cellA = ws[XLSX.utils.encode_cell({ r: R, c: 0 })];
+                    const cellB = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
+
+                    if (!cellA || !cellA.v) continue;
+                    const label = String(cellA.v).trim();
                     const key = LABEL_MAP[label.toLowerCase()];
                     if (!key) continue;
+
+                    let value = '';
+                    if (cellB) {
+                        // Prefer formatted text (w), but also handle date serials
+                        if (cellB.w) {
+                            value = String(cellB.w).trim();
+                        } else if (cellB.v != null) {
+                            // Try to convert date serial to dd/mm/yyyy
+                            const dateStr = excelDateToString(cellB.v);
+                            value = dateStr !== null ? dateStr : String(cellB.v).trim();
+                        }
+                    }
+
                     info[key] = value;
                     if (key.startsWith('GD') && key.endsWith('_TIEN')) {
                         const n = parseNumber(value);
@@ -596,11 +236,14 @@
                         }
                     }
                 }
+
+                // Sort giai_doan ASCENDING (1 → 2 → 3)
                 info._giai_doan.sort((a, b) => a[0] - b[0]);
 
                 if (info._giai_doan.length) {
                     const tong = info._giai_doan.reduce((s, [, v]) => s + v, 0);
                     info['TONG_TIEN'] = formatNumber(tong);
+                    info['SO_GIAI_DOAN'] = String(info._giai_doan.length);
                     for (const [gd, val] of info._giai_doan) {
                         info[`GD${gd}_TIEN`] = formatNumber(val);
                     }
@@ -623,63 +266,65 @@
         }
 
         // ══════════════════════════════════════════════════
-        //  XML MANIPULATION (DOMParser approach - safe)
+        //  XML MANIPULATION
         // ══════════════════════════════════════════════════
-
         const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
-        /** Get text from all w:t children of a w:p element */
         function getParagraphText(pElem) {
             return [...pElem.getElementsByTagNameNS(W, 't')]
                 .map(t => t.textContent).join('');
         }
 
-        /** Replace content of all w:t in a w:p with newText in the first run, clear the rest */
         function setParagraphText(pElem, newText) {
             const tElems = [...pElem.getElementsByTagNameNS(W, 't')];
-            if (!tElems.length) return;
+            if (!tElems.length) {
+                const doc = pElem.ownerDocument;
+                const r = doc.createElementNS(W, 'w:r');
+                const existingRuns = [...pElem.getElementsByTagNameNS(W, 'r')];
+                if (existingRuns.length > 0) {
+                    const existingRPr = existingRuns[0].getElementsByTagNameNS(W, 'rPr')[0];
+                    if (existingRPr) r.appendChild(existingRPr.cloneNode(true));
+                }
+                const t = doc.createElementNS(W, 'w:t');
+                t.setAttribute('xml:space', 'preserve');
+                t.textContent = newText;
+                r.appendChild(t);
+                pElem.appendChild(r);
+                return;
+            }
             tElems[0].textContent = newText;
             tElems[0].setAttribute('xml:space', 'preserve');
-            for (let i = 1; i < tElems.length; i++) {
-                tElems[i].textContent = '';
-            }
+            for (let i = 1; i < tElems.length; i++) tElems[i].textContent = '';
         }
 
-        /** Process all paragraphs in a given root element, replacing {{KEY}} placeholders */
         function replacePlaceholdersInElement(rootElem, replacements) {
             const paras = [...rootElem.getElementsByTagNameNS(W, 'p')];
             for (const p of paras) {
                 const fullText = getParagraphText(p);
                 if (!fullText.includes('{{')) continue;
-
                 let newText = fullText;
                 for (const [key, val] of Object.entries(replacements)) {
                     newText = newText.split(`{{${key}}}`).join(val != null ? String(val) : '');
                 }
-                if (newText !== fullText) {
-                    setParagraphText(p, newText);
-                }
+                if (newText !== fullText) setParagraphText(p, newText);
             }
         }
 
-        /** Parse XML string into a Document */
         function parseXml(xmlStr) {
             return new DOMParser().parseFromString(xmlStr, 'application/xml');
         }
-
-        /** Serialize XML Document back to string */
         function serializeXml(doc) {
             return new XMLSerializer().serializeToString(doc);
         }
 
         // ──────────────────────────────────────────────
-        //  DYNAMIC PAYMENT LIST (Nghiệm Thu)
-        //  Look for paragraphs whose full text matches
-        //  {{DONG_GIAI_DOAN}} / {{DONG_GD_N}} and expand.
+        //  DYNAMIC PAYMENT LIST (BBNT)
+        //  All {{DONG_GIAI_DOAN}} placeholders become
+        //  individual giai doan lines in ASCENDING order.
         // ──────────────────────────────────────────────
         function handlePaymentList(bodyElem, giaiDoan) {
             if (!giaiDoan.length) return;
-            const PH_RE = /^\{\{DONG_GD_?\d?\}\}$|^\{\{DONG_GIAI_DOAN\}\}$/;
+            const PH_RE = /^\{\{DONG_GIAI_DOAN\}\}$/;
 
             const paras = [...bodyElem.getElementsByTagNameNS(W, 'p')];
             let templatePara = null;
@@ -697,12 +342,10 @@
             const parent = templatePara.parentNode;
             const insertBefore = toRemove[toRemove.length - 1].nextSibling;
 
-            // Remove all placeholder paragraphs
             for (const p of toRemove) parent.removeChild(p);
 
-            // Insert new paragraphs (in reverse so we can insertBefore consistently)
-            for (let i = giaiDoan.length - 1; i >= 0; i--) {
-                const [gdNum, amount] = giaiDoan[i];
+            // Insert in ascending order (giaiDoan already sorted 1→2→3)
+            for (const [gdNum, amount] of giaiDoan) {
                 const newP = templatePara.cloneNode(true);
                 setParagraphText(newP, `+ Giai đoạn ${gdNum} : ${formatNumber(amount)}`);
                 parent.insertBefore(newP, insertBefore);
@@ -710,13 +353,13 @@
         }
 
         // ──────────────────────────────────────────────
-        //  DYNAMIC PAYMENT TABLE (Thanh Lý)
-        //  Find the payment table and rebuild data rows.
+        //  DYNAMIC PAYMENT TABLE (BBTL)
+        //  Template has 5 data rows (GD1–GD5).
+        //  Remove rows for unused giai doan.
         // ──────────────────────────────────────────────
         function handlePaymentTable(bodyElem, giaiDoan) {
             if (!giaiDoan.length) return;
 
-            // Find payment table (contains "Giai đoạn" and "Số tiền" somewhere)
             const tables = [...bodyElem.getElementsByTagNameNS(W, 'tbl')];
             let paymentTable = null;
             for (const tbl of tables) {
@@ -729,34 +372,14 @@
             if (!paymentTable) return;
 
             const rows = [...paymentTable.getElementsByTagNameNS(W, 'tr')];
-            if (rows.length < 2) return;
+            if (rows.length < 3) return;
 
-            const headerRow = rows[0];
-            const totalRow = rows[rows.length - 1];
-
-            // Remove all data rows (everything except header and total)
-            for (let i = 1; i < rows.length - 1; i++) {
-                paymentTable.removeChild(rows[i]);
-            }
-
-            // Clone total row as template for data rows (inherits formatting)
-            const tong = giaiDoan.reduce((s, [, v]) => s + v, 0);
-            for (let i = giaiDoan.length - 1; i >= 0; i--) {
-                const [gdNum, amount] = giaiDoan[i];
-                const newRow = totalRow.cloneNode(true);
-                const cells = [...newRow.getElementsByTagNameNS(W, 'tc')];
-                const labels = [`Giai đoạn ${gdNum}`, formatNumber(amount), 'Đã thanh toán', ''];
-                cells.forEach((cell, idx) => setParagraphText(
-                    cell.getElementsByTagNameNS(W, 'p')[0], labels[idx] || ''
-                ));
-                paymentTable.insertBefore(newRow, totalRow);
-            }
-
-            // Update total row: set second cell's text to total amount
-            const totalCells = [...totalRow.getElementsByTagNameNS(W, 'tc')];
-            if (totalCells.length >= 2) {
-                const totalPara = totalCells[1].getElementsByTagNameNS(W, 'p')[0];
-                if (totalPara) setParagraphText(totalPara, formatNumber(tong));
+            const numGD = giaiDoan.length;
+            // rows[0] = header, rows[1..5] = data rows (GD1-GD5), rows[6] = total
+            const dataRows = rows.slice(1, -1);
+            // Remove rows for unused giai doan (keep only first numGD data rows)
+            for (let i = numGD; i < dataRows.length; i++) {
+                paymentTable.removeChild(dataRows[i]);
             }
         }
 
@@ -770,7 +393,6 @@
                 Object.entries(info).filter(([k]) => !k.startsWith('_'))
             );
 
-            // Process document.xml using DOMParser
             const docXmlStr = await zip.file('word/document.xml').async('string');
             const docXmlDoc = parseXml(docXmlStr);
             const body = docXmlDoc.getElementsByTagNameNS(W, 'body')[0];
@@ -785,7 +407,6 @@
             }
             zip.file('word/document.xml', serializeXml(docXmlDoc));
 
-            // Process header/footer xmls
             for (const [path, file] of Object.entries(zip.files)) {
                 if (/word\/(header|footer)\d*\.xml/.test(path)) {
                     const xmlStr = await file.async('string');
@@ -825,7 +446,6 @@
         const doneTitle = document.getElementById('done-title');
         const doneDesc = document.getElementById('done-desc');
 
-        // Drop zone events
         dropzone.addEventListener('click', () => fileInput.click());
         dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
         dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
@@ -838,19 +458,9 @@
         fileInput.addEventListener('change', () => {
             if (fileInput.files[0]) loadFile(fileInput.files[0]);
         });
-
-        // Reset buttons
-        document.querySelectorAll('.btn-reset').forEach(btn => {
-            btn.addEventListener('click', resetUI);
-        });
-
-        // Generate button
+        document.querySelectorAll('.btn-reset').forEach(btn => btn.addEventListener('click', resetUI));
         generateBtn.addEventListener('click', runGenerate);
-
-        // Download
-        dlBtn.addEventListener('click', () => {
-            if (outputZip) saveAs(outputZip, 'bienban_output.zip');
-        });
+        dlBtn.addEventListener('click', () => { if (outputZip) saveAs(outputZip, 'bienban_output.zip'); });
 
         function loadFile(file) {
             const reader = new FileReader();
@@ -858,7 +468,6 @@
                 xlsxBuffer = e.target.result;
                 fileNameLabel.textContent = file.name;
                 fileChip.style.display = 'inline-flex';
-
                 try {
                     students = readExcelSheets(xlsxBuffer);
                 } catch (err) {
@@ -866,7 +475,6 @@
                     logDiv.style.display = 'block';
                     return;
                 }
-
                 renderStudentList();
                 generateBtn.disabled = false;
             };
@@ -883,10 +491,9 @@
                 row.className = 'student-row';
                 row.dataset.sheet = s._sheet;
                 row.innerHTML = `
-      <span class="dot pending"></span>
-      <span class="student-name">${ten}</span>
-      <span class="student-meta">${gd} giai đoạn · ${tong}</span>
-    `;
+                    <span class="dot pending"></span>
+                    <span class="student-name">${ten}</span>
+                    <span class="student-meta">${gd} giai đoạn · ${tong}</span>`;
                 studentRows.appendChild(row);
             }
             studentCountLabel.textContent = `${students.length} học viên`;
@@ -897,8 +504,7 @@
         function setRowStatus(sheetName, status) {
             const row = studentRows.querySelector(`[data-sheet="${CSS.escape(sheetName)}"]`);
             if (!row) return;
-            const dot = row.querySelector('.dot');
-            dot.className = `dot ${status}`;
+            row.querySelector('.dot').className = `dot ${status}`;
         }
 
         function appendLog(msg, type = 'info') {
@@ -917,7 +523,6 @@
 
         async function runGenerate() {
             if (!xlsxBuffer || !students.length) return;
-
             generateBtn.disabled = true;
             logDiv.innerHTML = '';
             logDiv.style.display = 'block';
@@ -925,7 +530,6 @@
             setProgress(0, students.length);
 
             appendLog('⏳ Đang tải file template...', 'info');
-
             let tplNT, tplTL;
             try {
                 [tplNT, tplTL] = await Promise.all([
@@ -940,7 +544,7 @@
             }
 
             const outZip = new JSZip();
-            let ok = 0, err = 0;
+            let ok = 0, errCount = 0;
 
             for (let i = 0; i < students.length; i++) {
                 const info = students[i];
@@ -948,7 +552,6 @@
                 const name = sanitize(ten);
                 appendLog(`🔄 ${ten}...`, 'info');
                 setRowStatus(info._sheet, 'pending');
-
                 try {
                     const [docNT, docTL] = await Promise.all([
                         fillDocx(tplNT.slice(), info, false),
@@ -963,41 +566,34 @@
                 } catch (e) {
                     appendLog(`   ❌ Lỗi: ${e.message}`, 'err');
                     setRowStatus(info._sheet, 'error');
-                    err++;
+                    errCount++;
                 }
-
                 setProgress(i + 1, students.length);
-                await new Promise(r => setTimeout(r, 10)); // yield to browser
+                await new Promise(r => setTimeout(r, 10));
             }
 
             outputZip = await outZip.generateAsync({ type: 'blob' });
-
-            // Summary
-            summaryText.textContent = `✓ ${ok} thành công · ${err} lỗi`;
+            summaryText.textContent = `✓ ${ok} thành công · ${errCount} lỗi`;
             summaryEl.classList.add('visible');
-            appendLog(`\n🏁 Hoàn thành: ${ok} học viên (${ok * 2} file) · ${err} lỗi`, ok ? 'ok' : 'err');
+            appendLog(`\n🏁 Hoàn thành: ${ok} học viên (${ok * 2} file) · ${errCount} lỗi`, ok ? 'ok' : 'err');
 
             if (ok > 0) {
-                // Show download card
                 mainCard.style.display = 'none';
                 downloadCard.style.display = 'flex';
                 doneTitle.textContent = `Xong! ${ok * 2} file được tạo`;
-                doneDesc.textContent = `${ok} học viên · ${err} lỗi`;
+                doneDesc.textContent = `${ok} học viên · ${errCount} lỗi`;
             } else {
                 generateBtn.disabled = false;
             }
         }
 
         function resetUI() {
-            xlsxBuffer = null;
-            students = [];
-            outputZip = null;
+            xlsxBuffer = null; students = []; outputZip = null;
             fileInput.value = '';
             fileChip.style.display = 'none';
             studentList.style.display = 'none';
             studentRows.innerHTML = '';
-            logDiv.style.display = 'none';
-            logDiv.innerHTML = '';
+            logDiv.style.display = 'none'; logDiv.innerHTML = '';
             progressWrap.style.display = 'none';
             progressBar.style.width = '0%';
             generateBtn.disabled = true;
@@ -1006,5 +602,4 @@
         }
     </script>
 </body>
-
 </html>
