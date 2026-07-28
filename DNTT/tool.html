@@ -458,6 +458,15 @@
       dataName: ""
     };
 
+    const PDF_FONT_NAME = "TimesNewRoman";
+    const PDF_FONT_FILES = {
+      normal: "fonts/Times New Roman.ttf",
+      bold: "fonts/Times New Roman Bold.ttf",
+      italics: "fonts/Times New Roman Italic.ttf",
+      bolditalics: "fonts/Times New Roman Bold Italic.ttf"
+    };
+    let pdfFontsReady = null;
+
     const elements = {
       dataFile: document.getElementById("data-file"),
       templateFile: document.getElementById("template-file"),
@@ -491,6 +500,46 @@
 
     function formatMoney(value) {
       return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      const chunks = [];
+      const chunkSize = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        chunks.push(String.fromCharCode(...bytes.subarray(offset, offset + chunkSize)));
+      }
+      return btoa(chunks.join(""));
+    }
+
+    async function ensurePdfFonts() {
+      if (pdfFontsReady) return pdfFontsReady;
+
+      pdfFontsReady = (async () => {
+        const virtualFiles = {};
+        const fontMap = {};
+
+        for (const [variant, relativePath] of Object.entries(PDF_FONT_FILES)) {
+          const response = await fetch(new URL(relativePath, window.location.href));
+          if (!response.ok) {
+            throw new Error(`Không tải được font Times New Roman (${response.status}).`);
+          }
+          const filename = relativePath.split("/").pop();
+          virtualFiles[filename] = arrayBufferToBase64(await response.arrayBuffer());
+          fontMap[variant] = filename;
+        }
+
+        Object.assign(window.pdfMake.vfs, virtualFiles);
+        window.pdfMake.fonts = {
+          ...(window.pdfMake.fonts || {}),
+          [PDF_FONT_NAME]: fontMap
+        };
+      })().catch((error) => {
+        pdfFontsReady = null;
+        throw error;
+      });
+
+      return pdfFontsReady;
     }
 
     function parseAmount(value) {
@@ -860,7 +909,7 @@
         pageSize: "A4",
         pageMargins: [42, 34, 42, 34],
         defaultStyle: {
-          font: "Roboto",
+          font: PDF_FONT_NAME,
           fontSize: 9,
           color: "#000000",
           lineHeight: 1.15
@@ -981,10 +1030,11 @@
       };
     }
 
-    function buildPdf(row) {
+    async function buildPdf(row) {
       if (!window.pdfMake) {
-        return Promise.reject(new Error("Không tải được thư viện PDF. Hãy kiểm tra kết nối mạng và thử lại."));
+        throw new Error("Không tải được thư viện PDF. Hãy kiểm tra kết nối mạng và thử lại.");
       }
+      await ensurePdfFonts();
       return new Promise((resolve, reject) => {
         try {
           window.pdfMake.createPdf(buildPdfDefinition(row)).getBlob(resolve);
