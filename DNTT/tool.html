@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sinh đề nghị thanh toán</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f4ef;
+      --panel: #fbfcf8;
+      --panel-2: #eef0e8;
+      --text: #1d241f;
+      --muted: #687069;
+      --line: #d8ddd5;
+      --accent: #176b4d;
+      --accent-strong: #0f523a;
+      --accent-soft: #dceee5;
+      --danger: #a83a32;
+      --danger-soft: #f8e4e1;
+      --radius: 14px;
+      --shadow: 0 18px 45px rgba(30, 45, 36, .08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141815;
+        --panel: #1c211d;
+        --panel-2: #242a25;
+        --text: #edf2ed;
+        --muted: #a8b1aa;
+        --line: #343c36;
+        --accent: #63c79c;
+        --accent-strong: #8dd9b8;
+        --accent-soft: #1f3d31;
+        --danger: #ff9a91;
+        --danger-soft: #452724;
+        --shadow: 0 18px 45px rgba(0, 0, 0, .24);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Aptos", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input { font: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+      gap: 36px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.25rem);
+      line-height: .98;
+      letter-spacing: -.055em;
+      font-weight: 700;
+    }
+
+    .intro {
+      max-width: 48ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .workspace {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .file-panel {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .file-panel + .file-panel {
+      border-left: 1px solid var(--line);
+    }
+
+    .step-label {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 650;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -.02em;
+    }
+
+    .file-copy {
+      min-height: 42px;
+      margin: 8px 0 18px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .file-control {
+      position: relative;
+      display: flex;
+      min-height: 92px;
+      padding: 16px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px dashed var(--line);
+      border-radius: calc(var(--radius) - 4px);
+      background: var(--panel-2);
+    }
+
+    .file-control:focus-within {
+      outline: 3px solid color-mix(in srgb, var(--accent) 24%, transparent);
+      border-color: var(--accent);
+    }
+
+    .file-control input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-name {
+      min-width: 0;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .file-meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .choose {
+      flex: none;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--panel);
+      font-size: .82rem;
+      font-weight: 650;
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      min-height: 310px;
+    }
+
+    .preview {
+      padding: 26px;
+      border-right: 1px solid var(--line);
+    }
+
+    .preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: .86rem;
+    }
+
+    .table-wrap {
+      max-height: 300px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) - 4px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .86rem;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 700;
+    }
+
+    td.amount {
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-weight: 650;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .empty {
+      display: grid;
+      min-height: 210px;
+      place-items: center;
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      padding: 26px;
+      background: var(--panel-2);
+    }
+
+    .actions p {
+      margin: 8px 0 22px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 45px;
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #f7fff9;
+    }
+
+    .btn-primary:hover { background: var(--accent-strong); }
+
+    .btn-secondary {
+      margin-top: 10px;
+      border-color: var(--line);
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+      transform: none;
+    }
+
+    .status {
+      min-height: 44px;
+      margin-top: auto;
+      padding-top: 22px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .status.success { color: var(--accent-strong); }
+    .status.error { color: var(--danger); }
+
+    .note {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 26px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .note a {
+      color: var(--accent-strong);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .note a:hover { text-decoration: underline; }
+
+    @media (max-width: 780px) {
+      .shell { width: min(100% - 20px, 680px); padding-top: 24px; }
+      header, .setup, .results { grid-template-columns: 1fr; }
+      header { gap: 14px; }
+      h1 { font-size: clamp(2.2rem, 12vw, 3.5rem); }
+      .file-panel + .file-panel { border-left: 0; border-top: 1px solid var(--line); }
+      .preview { border-right: 0; border-bottom: 1px solid var(--line); }
+      .actions { min-height: 260px; }
+      .note { flex-direction: column; gap: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>Sinh đề nghị thanh toán</h1>
+      <p class="intro">Nhập danh sách chi, kiểm tra các dòng hợp lệ và xuất từng đề nghị thanh toán theo đúng mẫu Excel.</p>
+    </header>
+
+    <section class="workspace" aria-label="Công cụ sinh đề nghị thanh toán">
+      <div class="setup">
+        <section class="file-panel">
+          <p class="step-label">Bước 1</p>
+          <h2>Danh sách chi</h2>
+          <p class="file-copy">Cần có các cột Ngày hạch toán, Số chứng từ, Diễn giải và Số tiền.</p>
+          <label class="file-control">
+            <span>
+              <span class="file-name" id="data-name">Chọn file danh sách</span>
+              <span class="file-meta" id="data-meta">Định dạng .xlsx hoặc .xls</span>
+            </span>
+            <span class="choose">Chọn file</span>
+            <input id="data-file" data-testid="data-file" type="file" accept=".xlsx,.xls">
+          </label>
+        </section>
+
+        <section class="file-panel">
+          <p class="step-label">Bước 2</p>
+          <h2>Mẫu đề nghị</h2>
+          <p class="file-copy">Mẫu mặc định đã chứa các placeholder và vẫn có thể thay bằng mẫu khác.</p>
+          <label class="file-control">
+            <span>
+              <span class="file-name" id="template-name">Đang tải mẫu mặc định</span>
+              <span class="file-meta" id="template-meta">Mau_template.xlsx</span>
+            </span>
+            <span class="choose">Thay mẫu</span>
+            <input id="template-file" data-testid="template-file" type="file" accept=".xlsx">
+          </label>
+        </section>
+      </div>
+
+      <div class="results">
+        <section class="preview">
+          <div class="preview-head">
+            <h2>Dữ liệu sẽ tạo</h2>
+            <span class="count" id="record-count">0 dòng</span>
+          </div>
+          <div class="table-wrap" id="table-wrap">
+            <div class="empty" id="empty-state">Chọn danh sách chi để xem trước dữ liệu.</div>
+            <table id="preview-table" hidden>
+              <thead>
+                <tr>
+                  <th>Chứng từ</th>
+                  <th>Ngày lập</th>
+                  <th>Nội dung</th>
+                  <th style="text-align:right">Số tiền</th>
+                </tr>
+              </thead>
+              <tbody id="preview-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="actions">
+          <p class="step-label">Bước 3</p>
+          <h2>Xuất kết quả</h2>
+          <p>Mỗi dòng tạo một file Excel. Tên file lấy từ cột Số chứng từ.</p>
+          <button class="btn btn-primary" id="generate-all" data-testid="generate-all" type="button" disabled>Sinh tất cả thành ZIP</button>
+          <button class="btn btn-secondary" id="generate-one" data-testid="generate-one" type="button" disabled>Tải thử 1 file đầu tiên</button>
+          <div class="status" id="status" role="status" aria-live="polite">Chưa có dữ liệu để xử lý.</div>
+        </aside>
+      </div>
+
+      <div class="note">
+        <span>Dữ liệu chỉ được xử lý trong trình duyệt và không tải lên máy chủ.</span>
+        <a href="Mau_template.xlsx" download>Tải mẫu có placeholder</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const REQUIRED_PLACEHOLDERS = [
+      "%NGAYLAP%",
+      "%NOIDUNG%",
+      "%DONGIA%",
+      "%SOTIENBANGCHU%"
+    ];
+
+    const state = {
+      rows: [],
+      templateBuffer: null,
+      templateName: "",
+      dataName: ""
+    };
+
+    const elements = {
+      dataFile: document.getElementById("data-file"),
+      templateFile: document.getElementById("template-file"),
+      dataName: document.getElementById("data-name"),
+      dataMeta: document.getElementById("data-meta"),
+      templateName: document.getElementById("template-name"),
+      templateMeta: document.getElementById("template-meta"),
+      recordCount: document.getElementById("record-count"),
+      emptyState: document.getElementById("empty-state"),
+      previewTable: document.getElementById("preview-table"),
+      previewBody: document.getElementById("preview-body"),
+      generateAll: document.getElementById("generate-all"),
+      generateOne: document.getElementById("generate-one"),
+      status: document.getElementById("status")
+    };
+
+    const XML_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+    const XML_SPACE_NS = "http://www.w3.org/XML/1998/namespace";
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll("đ", "d")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
+    }
+
+    function parseAmount(value) {
+      if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
+      const clean = String(value ?? "").replace(/[^\d-]/g, "");
+      if (!clean || clean === "-") return NaN;
+      return Number.parseInt(clean, 10);
+    }
+
+    function excelSerialToDate(serial) {
+      return new Date(Math.round((serial - 25569) * 86400 * 1000));
+    }
+
+    function dateToExcelSerial(date) {
+      const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+      return Math.round(utc / 86400000 + 25569);
+    }
+
+    function parseDateValue(value) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return { serial: value, date: excelSerialToDate(value) };
+      }
+      if (value instanceof Date && !Number.isNaN(value.valueOf())) {
+        return { serial: dateToExcelSerial(value), date: value };
+      }
+      const text = String(value ?? "").trim();
+      const match = text.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+      if (match) {
+        const year = Number(match[3]) < 100 ? 2000 + Number(match[3]) : Number(match[3]);
+        const date = new Date(year, Number(match[2]) - 1, Number(match[1]));
+        return { serial: dateToExcelSerial(date), date };
+      }
+      const parsed = new Date(text);
+      if (!Number.isNaN(parsed.valueOf())) return { serial: dateToExcelSerial(parsed), date: parsed };
+      return null;
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function sanitizeFilename(value) {
+      const cleaned = String(value ?? "")
+        .trim()
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+        .replace(/[. ]+$/g, "");
+      return cleaned || "Chung_tu";
+    }
+
+    function readThreeDigits(number, forceFull) {
+      const digits = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+      const hundred = Math.floor(number / 100);
+      const tens = Math.floor((number % 100) / 10);
+      const unit = number % 10;
+      const words = [];
+
+      if (hundred > 0 || forceFull) {
+        words.push(digits[hundred], "trăm");
+      }
+      if (tens > 1) {
+        words.push(digits[tens], "mươi");
+        if (unit === 1) words.push("mốt");
+        else if (unit === 4) words.push("tư");
+        else if (unit === 5) words.push("lăm");
+        else if (unit > 0) words.push(digits[unit]);
+      } else if (tens === 1) {
+        words.push("mười");
+        if (unit === 5) words.push("lăm");
+        else if (unit > 0) words.push(digits[unit]);
+      } else if (unit > 0) {
+        if (hundred > 0 || forceFull) words.push("lẻ");
+        words.push(digits[unit]);
+      }
+      return words.join(" ");
+    }
+
+    function numberToVietnameseWords(value) {
+      const number = Math.round(Math.abs(Number(value)));
+      if (!Number.isFinite(number)) return "";
+      if (number === 0) return "Không đồng chẵn";
+
+      const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+      const groups = [];
+      let remaining = number;
+      while (remaining > 0) {
+        groups.push(remaining % 1000);
+        remaining = Math.floor(remaining / 1000);
+      }
+
+      const parts = [];
+      for (let index = groups.length - 1; index >= 0; index -= 1) {
+        const group = groups[index];
+        if (group === 0) continue;
+        const forceFull = index < groups.length - 1 && group < 100;
+        parts.push(readThreeDigits(group, forceFull));
+        if (units[index]) parts.push(units[index]);
+      }
+
+      const sentence = parts.join(" ").replace(/\s+/g, " ").trim();
+      return sentence.charAt(0).toUpperCase() + sentence.slice(1) + " đồng chẵn";
+    }
+
+    function setStatus(message, type = "") {
+      elements.status.textContent = message;
+      elements.status.className = `status ${type}`.trim();
+    }
+
+    function updateButtons() {
+      const ready = state.rows.length > 0 && Boolean(state.templateBuffer);
+      elements.generateAll.disabled = !ready;
+      elements.generateOne.disabled = !ready;
+    }
+
+    function renderPreview() {
+      elements.recordCount.textContent = `${state.rows.length} dòng`;
+      elements.previewBody.replaceChildren();
+      if (!state.rows.length) {
+        elements.emptyState.hidden = false;
+        elements.previewTable.hidden = true;
+        updateButtons();
+        return;
+      }
+
+      for (const row of state.rows.slice(0, 100)) {
+        const tr = document.createElement("tr");
+        const values = [
+          row.voucher,
+          row.dateText,
+          row.description,
+          formatMoney(row.amount)
+        ];
+        values.forEach((value, index) => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          if (index === 3) td.className = "amount";
+          tr.appendChild(td);
+        });
+        elements.previewBody.appendChild(tr);
+      }
+      elements.emptyState.hidden = true;
+      elements.previewTable.hidden = false;
+      updateButtons();
+    }
+
+    function findHeaderRow(matrix) {
+      const aliases = {
+        date: ["ngay hach toan", "ngay lap", "ngay"],
+        voucher: ["so chung tu", "chung tu"],
+        description: ["dien giai", "noi dung", "noi dung de nghi thanh toan"],
+        amount: ["so tien", "thanh tien", "don gia"]
+      };
+
+      for (let rowIndex = 0; rowIndex < Math.min(matrix.length, 25); rowIndex += 1) {
+        const row = matrix[rowIndex].map(normalizeText);
+        const columns = {};
+        for (const [key, names] of Object.entries(aliases)) {
+          columns[key] = row.findIndex((cell) => names.includes(cell));
+        }
+        if (Object.values(columns).every((index) => index >= 0)) {
+          return { rowIndex, columns };
+        }
+      }
+      return null;
+    }
+
+    function extractRows(arrayBuffer) {
+      const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
+      let selected = null;
+
+      for (const sheetName of workbook.SheetNames) {
+        const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+          header: 1,
+          raw: true,
+          defval: null
+        });
+        const header = findHeaderRow(matrix);
+        if (header) {
+          selected = { sheetName, matrix, header };
+          break;
+        }
+      }
+
+      if (!selected) {
+        throw new Error("Không tìm thấy đủ 4 cột bắt buộc trong bất kỳ sheet nào.");
+      }
+
+      const { matrix, header } = selected;
+      const rows = [];
+      const skipped = [];
+
+      for (let index = header.rowIndex + 1; index < matrix.length; index += 1) {
+        const source = matrix[index];
+        const voucher = String(source[header.columns.voucher] ?? "").trim();
+        const description = String(source[header.columns.description] ?? "").trim();
+        const amount = parseAmount(source[header.columns.amount]);
+        const parsedDate = parseDateValue(source[header.columns.date]);
+
+        if (!voucher && !description && !Number.isFinite(amount)) continue;
+        if (!voucher || !description || !Number.isFinite(amount) || amount < 0 || !parsedDate) {
+          skipped.push(index + 1);
+          continue;
+        }
+
+        rows.push({
+          sourceRow: index + 1,
+          voucher,
+          description,
+          amount,
+          dateSerial: parsedDate.serial,
+          dateText: formatDate(parsedDate.date)
+        });
+      }
+
+      return { rows, skipped, sheetName: selected.sheetName };
+    }
+
+    async function getTemplatePlaceholders(arrayBuffer) {
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const sharedStrings = await readSharedStrings(zip);
+      const found = new Set();
+      const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
+
+      for (const worksheetPath of paths) {
+        const xml = await zip.file(worksheetPath).async("string");
+        const documentXml = new DOMParser().parseFromString(xml, "application/xml");
+        for (const cell of documentXml.querySelectorAll("c")) {
+          const value = getCellText(cell, sharedStrings);
+          if (REQUIRED_PLACEHOLDERS.includes(value)) found.add(value);
+        }
+      }
+      return found;
+    }
+
+    async function readSharedStrings(zip) {
+      const file = zip.file("xl/sharedStrings.xml");
+      if (!file) return [];
+      const xml = await file.async("string");
+      const documentXml = new DOMParser().parseFromString(xml, "application/xml");
+      return [...documentXml.querySelectorAll("si")].map((item) => item.textContent);
+    }
+
+    function getCellText(cell, sharedStrings) {
+      const type = cell.getAttribute("t");
+      if (type === "s") {
+        const index = Number(cell.querySelector("v")?.textContent ?? -1);
+        return sharedStrings[index] ?? "";
+      }
+      if (type === "inlineStr") return cell.querySelector("is")?.textContent ?? "";
+      return cell.querySelector("v")?.textContent ?? "";
+    }
+
+    function clearCellPayload(cell, keepFormula = false) {
+      for (const child of [...cell.children]) {
+        if (keepFormula && child.localName === "f") continue;
+        if (["f", "v", "is"].includes(child.localName)) child.remove();
+      }
+    }
+
+    function writeCellValue(documentXml, cell, replacement) {
+      clearCellPayload(cell);
+      if (replacement.type === "number") {
+        cell.removeAttribute("t");
+        const value = documentXml.createElementNS(XML_NS, "v");
+        value.textContent = String(replacement.value);
+        cell.appendChild(value);
+        return;
+      }
+
+      cell.setAttribute("t", "inlineStr");
+      const inline = documentXml.createElementNS(XML_NS, "is");
+      const text = documentXml.createElementNS(XML_NS, "t");
+      text.setAttributeNS(XML_SPACE_NS, "xml:space", "preserve");
+      text.textContent = String(replacement.value);
+      inline.appendChild(text);
+      cell.appendChild(inline);
+    }
+
+    function setFormulaCache(documentXml, cell, value) {
+      const formula = cell.querySelector("f");
+      if (!formula) {
+        writeCellValue(documentXml, cell, { type: "number", value });
+        return;
+      }
+      clearCellPayload(cell, true);
+      cell.removeAttribute("t");
+      const cached = documentXml.createElementNS(XML_NS, "v");
+      cached.textContent = String(value);
+      cell.appendChild(cached);
+    }
+
+    async function buildWorkbook(row) {
+      const zip = await JSZip.loadAsync(state.templateBuffer);
+      const sharedStrings = await readSharedStrings(zip);
+      const replacements = {
+        "%NGAYLAP%": { type: "number", value: row.dateSerial },
+        "%NOIDUNG%": { type: "string", value: row.description },
+        "%DONGIA%": { type: "number", value: row.amount },
+        "%SOTIENBANGCHU%": { type: "string", value: numberToVietnameseWords(row.amount) }
+      };
+      const found = new Set();
+      const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
+
+      for (const worksheetPath of paths) {
+        const xml = await zip.file(worksheetPath).async("string");
+        const documentXml = new DOMParser().parseFromString(xml, "application/xml");
+        for (const cell of documentXml.querySelectorAll("c")) {
+          const placeholder = getCellText(cell, sharedStrings);
+          if (replacements[placeholder]) {
+            writeCellValue(documentXml, cell, replacements[placeholder]);
+            found.add(placeholder);
+          }
+
+          const ref = cell.getAttribute("r");
+          if (ref === "G16" || ref === "G22") {
+            setFormulaCache(documentXml, cell, row.amount);
+          }
+        }
+        zip.file(worksheetPath, new XMLSerializer().serializeToString(documentXml));
+      }
+
+      const missing = REQUIRED_PLACEHOLDERS.filter((placeholder) => !found.has(placeholder));
+      if (missing.length) throw new Error(`Mẫu thiếu placeholder: ${missing.join(", ")}`);
+
+      const workbookFile = zip.file("xl/workbook.xml");
+      if (workbookFile) {
+        const xml = await workbookFile.async("string");
+        const documentXml = new DOMParser().parseFromString(xml, "application/xml");
+        let calcPr = documentXml.querySelector("calcPr");
+        if (!calcPr) {
+          calcPr = documentXml.createElementNS(XML_NS, "calcPr");
+          documentXml.documentElement.appendChild(calcPr);
+        }
+        calcPr.setAttribute("calcMode", "auto");
+        calcPr.setAttribute("fullCalcOnLoad", "1");
+        calcPr.setAttribute("forceFullCalc", "1");
+        zip.file("xl/workbook.xml", new XMLSerializer().serializeToString(documentXml));
+      }
+
+      return zip.generateAsync({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 }
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    async function loadTemplateBuffer(buffer, filename) {
+      const placeholders = await getTemplatePlaceholders(buffer);
+      const missing = REQUIRED_PLACEHOLDERS.filter((item) => !placeholders.has(item));
+      if (missing.length) throw new Error(`Mẫu thiếu placeholder: ${missing.join(", ")}`);
+      state.templateBuffer = buffer;
+      state.templateName = filename;
+      elements.templateName.textContent = filename;
+      elements.templateMeta.textContent = "Đã kiểm tra đủ 4 placeholder";
+      updateButtons();
+    }
+
+    async function loadDefaultTemplate() {
+      try {
+        const response = await fetch("Mau_template.xlsx");
+        if (!response.ok) throw new Error("Không tải được mẫu mặc định.");
+        await loadTemplateBuffer(await response.arrayBuffer(), "Mau_template.xlsx");
+        setStatus("Mẫu mặc định đã sẵn sàng.");
+      } catch (error) {
+        elements.templateName.textContent = "Chọn file mẫu";
+        elements.templateMeta.textContent = "Không thể tự tải mẫu khi mở trực tiếp";
+        setStatus("Hãy chọn Mau_template.xlsx để tiếp tục.", "error");
+      }
+    }
+
+    elements.dataFile.addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const parsed = extractRows(await file.arrayBuffer());
+        state.rows = parsed.rows;
+        state.dataName = file.name;
+        elements.dataName.textContent = file.name;
+        elements.dataMeta.textContent = `Sheet ${parsed.sheetName}, ${parsed.rows.length} dòng hợp lệ`;
+        renderPreview();
+        const skippedText = parsed.skipped.length ? ` Bỏ qua ${parsed.skipped.length} dòng thiếu dữ liệu.` : "";
+        setStatus(`Đã đọc ${parsed.rows.length} dòng.${skippedText}`, "success");
+      } catch (error) {
+        state.rows = [];
+        renderPreview();
+        elements.dataName.textContent = file.name;
+        elements.dataMeta.textContent = "Không đọc được cấu trúc dữ liệu";
+        setStatus(error.message || String(error), "error");
+      }
+    });
+
+    elements.templateFile.addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        await loadTemplateBuffer(await file.arrayBuffer(), file.name);
+        setStatus("Mẫu đề nghị đã sẵn sàng.", "success");
+      } catch (error) {
+        state.templateBuffer = null;
+        updateButtons();
+        elements.templateName.textContent = file.name;
+        elements.templateMeta.textContent = "Mẫu chưa hợp lệ";
+        setStatus(error.message || String(error), "error");
+      }
+    });
+
+    elements.generateOne.addEventListener("click", async () => {
+      if (!state.rows.length || !state.templateBuffer) return;
+      elements.generateOne.disabled = true;
+      elements.generateAll.disabled = true;
+      try {
+        setStatus("Đang sinh file thử...");
+        const row = state.rows[0];
+        const blob = await buildWorkbook(row);
+        downloadBlob(blob, `${sanitizeFilename(row.voucher)}.xlsx`);
+        setStatus(`Đã tạo ${sanitizeFilename(row.voucher)}.xlsx`, "success");
+      } catch (error) {
+        setStatus(error.message || String(error), "error");
+      } finally {
+        updateButtons();
+      }
+    });
+
+    elements.generateAll.addEventListener("click", async () => {
+      if (!state.rows.length || !state.templateBuffer) return;
+      elements.generateOne.disabled = true;
+      elements.generateAll.disabled = true;
+      try {
+        const outputZip = new JSZip();
+        const usedNames = new Map();
+        for (let index = 0; index < state.rows.length; index += 1) {
+          const row = state.rows[index];
+          setStatus(`Đang tạo ${index + 1}/${state.rows.length}: ${row.voucher}`);
+          const blob = await buildWorkbook(row);
+          const base = sanitizeFilename(row.voucher);
+          const seen = (usedNames.get(base) || 0) + 1;
+          usedNames.set(base, seen);
+          const suffix = seen > 1 ? `-${seen}` : "";
+          outputZip.file(`${base}${suffix}.xlsx`, blob);
+        }
+        setStatus("Đang đóng gói file ZIP...");
+        const zipBlob = await outputZip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 }
+        });
+        downloadBlob(zipBlob, `De_nghi_thanh_toan_${state.rows.length}_file.zip`);
+        setStatus(`Đã tạo đủ ${state.rows.length} file.`, "success");
+      } catch (error) {
+        setStatus(error.message || String(error), "error");
+      } finally {
+        updateButtons();
+      }
+    });
+
+    loadDefaultTemplate();
+  </script>
+</body>
+</html>
