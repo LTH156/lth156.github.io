@@ -439,6 +439,88 @@
             background: rgba(167, 139, 250, .12);
             border-color: rgba(167, 139, 250, .6);
         }
+
+        .template-manager {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .025);
+        }
+
+        .template-manager h2 {
+            margin-bottom: .25rem;
+            font-size: .95rem;
+        }
+
+        .template-manager > p {
+            margin-bottom: .8rem;
+            color: var(--text-muted);
+            font-size: .78rem;
+        }
+
+        .template-row {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .7rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .template-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .template-label {
+            display: block;
+            margin-bottom: .15rem;
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+
+        .template-name {
+            display: block;
+            overflow: hidden;
+            color: var(--text);
+            font-size: .84rem;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .template-action {
+            flex: none;
+            padding: .45rem .65rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--primary2);
+            font: 500 .75rem 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .template-action:hover {
+            border-color: var(--primary2);
+            background: rgba(167, 139, 250, .08);
+        }
+
+        .template-action:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        .template-upload {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .template-upload input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -475,6 +557,33 @@
             </svg>
             Tải file Excel mẫu
         </a>
+
+        <section class="template-manager" aria-label="Quản lý mẫu biên bản">
+            <h2>Mẫu biên bản</h2>
+            <p>Tải mẫu đang dùng xuống để chỉnh sửa hoặc thay bằng file Word khác.</p>
+            <div class="template-row">
+                <div class="template-info">
+                    <span class="template-label">Biên bản nghiệm thu</span>
+                    <span class="template-name" id="template-nt-name">Đang tải mẫu mặc định…</span>
+                </div>
+                <button class="template-action" id="download-template-nt" type="button" disabled>Tải xuống</button>
+                <label class="template-action template-upload">
+                    Thay mẫu
+                    <input id="template-nt-input" type="file" accept=".docx">
+                </label>
+            </div>
+            <div class="template-row">
+                <div class="template-info">
+                    <span class="template-label">Biên bản thanh lý</span>
+                    <span class="template-name" id="template-tl-name">Đang tải mẫu mặc định…</span>
+                </div>
+                <button class="template-action" id="download-template-tl" type="button" disabled>Tải xuống</button>
+                <label class="template-action template-upload">
+                    Thay mẫu
+                    <input id="template-tl-input" type="file" accept=".docx">
+                </label>
+            </div>
+        </section>
 
         <!-- Student preview list -->
         <div id="student-list">
@@ -804,6 +913,10 @@
         let xlsxBuffer = null;
         let students = [];
         let outputZip = null;
+        const templates = {
+            nt: { buffer: null, name: 'template_nghiem_thu.docx' },
+            tl: { buffer: null, name: 'template_thanh_ly.docx' }
+        };
 
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('file-input');
@@ -824,6 +937,76 @@
         const dlBtn = document.getElementById('dl-btn');
         const doneTitle = document.getElementById('done-title');
         const doneDesc = document.getElementById('done-desc');
+        const templateControls = {
+            nt: {
+                input: document.getElementById('template-nt-input'),
+                name: document.getElementById('template-nt-name'),
+                download: document.getElementById('download-template-nt')
+            },
+            tl: {
+                input: document.getElementById('template-tl-input'),
+                name: document.getElementById('template-tl-name'),
+                download: document.getElementById('download-template-tl')
+            }
+        };
+
+        function updateGenerateButton() {
+            generateBtn.disabled = !(xlsxBuffer && students.length && templates.nt.buffer && templates.tl.buffer);
+        }
+
+        async function validateDocx(buffer) {
+            const zip = await JSZip.loadAsync(buffer);
+            if (!zip.file('word/document.xml')) {
+                throw new Error('File không phải mẫu Word .docx hợp lệ.');
+            }
+        }
+
+        async function setTemplate(kind, buffer, name) {
+            await validateDocx(buffer);
+            templates[kind].buffer = buffer;
+            templates[kind].name = name;
+            templateControls[kind].name.textContent = name;
+            templateControls[kind].download.disabled = false;
+            updateGenerateButton();
+        }
+
+        async function loadDefaultTemplates() {
+            const configs = [
+                ['nt', './assets/template_nghiem_thu.docx', 'template_nghiem_thu.docx'],
+                ['tl', './assets/template_thanh_ly.docx', 'template_thanh_ly.docx']
+            ];
+            await Promise.all(configs.map(async ([kind, url, name]) => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    await setTemplate(kind, await response.arrayBuffer(), name);
+                } catch (error) {
+                    templateControls[kind].name.textContent = 'Chọn file mẫu để tiếp tục';
+                }
+            }));
+            updateGenerateButton();
+        }
+
+        for (const kind of ['nt', 'tl']) {
+            templateControls[kind].input.addEventListener('change', async event => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                try {
+                    await setTemplate(kind, await file.arrayBuffer(), file.name);
+                } catch (error) {
+                    appendLog(`❌ ${file.name}: ${error.message}`, 'err');
+                    logDiv.style.display = 'block';
+                    event.target.value = '';
+                }
+            });
+            templateControls[kind].download.addEventListener('click', () => {
+                const template = templates[kind];
+                if (!template.buffer) return;
+                saveAs(new Blob([template.buffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                }), template.name);
+            });
+        }
 
         // Drop zone events
         dropzone.addEventListener('click', () => fileInput.click());
@@ -868,7 +1051,7 @@
                 }
 
                 renderStudentList();
-                generateBtn.disabled = false;
+                updateGenerateButton();
             };
             reader.readAsArrayBuffer(file);
         }
@@ -924,20 +1107,14 @@
             progressWrap.style.display = 'block';
             setProgress(0, students.length);
 
-            appendLog('⏳ Đang tải file template...', 'info');
-
-            let tplNT, tplTL;
-            try {
-                [tplNT, tplTL] = await Promise.all([
-                    fetch('./assets/template_nghiem_thu.docx').then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)),
-                    fetch('./assets/template_thanh_ly.docx').then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)),
-                ]);
-                appendLog('✅ Đã tải template thành công.', 'ok');
-            } catch (err) {
-                appendLog(`❌ Không tải được template: ${err}`, 'err');
-                generateBtn.disabled = false;
+            const tplNT = templates.nt.buffer;
+            const tplTL = templates.tl.buffer;
+            if (!tplNT || !tplTL) {
+                appendLog('❌ Hãy chọn đủ hai file mẫu trước khi tạo biên bản.', 'err');
+                updateGenerateButton();
                 return;
             }
+            appendLog('✅ Đã dùng các mẫu đang được chọn.', 'ok');
 
             const outZip = new JSZip();
             let ok = 0, err = 0;
@@ -984,7 +1161,7 @@
                 doneTitle.textContent = `Xong! ${ok * 2} file được tạo`;
                 doneDesc.textContent = `${ok} học viên · ${err} lỗi`;
             } else {
-                generateBtn.disabled = false;
+                updateGenerateButton();
             }
         }
 
@@ -1000,10 +1177,12 @@
             logDiv.innerHTML = '';
             progressWrap.style.display = 'none';
             progressBar.style.width = '0%';
-            generateBtn.disabled = true;
+            updateGenerateButton();
             mainCard.style.display = 'block';
             downloadCard.style.display = 'none';
         }
+
+        loadDefaultTemplates();
     </script>
 </body>
 

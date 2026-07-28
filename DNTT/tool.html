@@ -326,13 +326,28 @@
       font-size: .8rem;
     }
 
-    .note a {
+    .note a,
+    .note button {
       color: var(--accent-strong);
       font-weight: 700;
       text-decoration: none;
     }
 
-    .note a:hover { text-decoration: underline; }
+    .note button {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .note a:hover,
+    .note button:hover { text-decoration: underline; }
+
+    .note button:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
 
     @media (max-width: 780px) {
       .shell { width: min(100% - 20px, 680px); padding-top: 24px; }
@@ -423,7 +438,7 @@
 
       <div class="note">
         <span>Dữ liệu chỉ được xử lý trong trình duyệt và không tải lên máy chủ.</span>
-        <a href="Mau_template.xlsx" download>Tải mẫu có placeholder</a>
+        <button id="download-template" type="button" disabled>Tải mẫu đang dùng</button>
       </div>
     </section>
   </main>
@@ -450,6 +465,7 @@
       dataMeta: document.getElementById("data-meta"),
       templateName: document.getElementById("template-name"),
       templateMeta: document.getElementById("template-meta"),
+      downloadTemplate: document.getElementById("download-template"),
       recordCount: document.getElementById("record-count"),
       emptyState: document.getElementById("empty-state"),
       previewTable: document.getElementById("preview-table"),
@@ -591,6 +607,7 @@
       elements.generateAll.disabled = !ready;
       elements.generatePdfAll.disabled = !ready;
       elements.generateOne.disabled = !ready;
+      elements.downloadTemplate.disabled = !state.templateBuffer;
     }
 
     function renderPreview() {
@@ -1046,6 +1063,15 @@
         elements.templateMeta.textContent = "Mẫu chưa hợp lệ";
         setStatus(error.message || String(error), "error");
       }
+    });
+
+    elements.downloadTemplate.addEventListener("click", () => {
+      if (!state.templateBuffer) return;
+      const blob = new Blob([state.templateBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      downloadBlob(blob, state.templateName || "Mau_template.xlsx");
+      setStatus(`Đã tải mẫu ${state.templateName || "Mau_template.xlsx"}.`, "success");
     });
 
     elements.generateOne.addEventListener("click", async () => {
