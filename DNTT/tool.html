@@ -7,6 +7,8 @@
   <link rel="icon" href="data:,">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -411,8 +413,9 @@
         <aside class="actions">
           <p class="step-label">Bước 3</p>
           <h2>Xuất kết quả</h2>
-          <p>Mỗi dòng tạo một file Excel. Tên file lấy từ cột Số chứng từ.</p>
-          <button class="btn btn-primary" id="generate-all" data-testid="generate-all" type="button" disabled>Sinh tất cả thành ZIP</button>
+          <p>Mỗi dòng tạo một file Excel hoặc PDF. Tên file lấy từ cột Số chứng từ.</p>
+          <button class="btn btn-primary" id="generate-all" data-testid="generate-all" type="button" disabled>Tải toàn bộ Excel (.zip)</button>
+          <button class="btn btn-secondary" id="generate-pdf-all" data-testid="generate-pdf-all" type="button" disabled>Tải toàn bộ PDF (.zip)</button>
           <button class="btn btn-secondary" id="generate-one" data-testid="generate-one" type="button" disabled>Tải thử 1 file đầu tiên</button>
           <div class="status" id="status" role="status" aria-live="polite">Chưa có dữ liệu để xử lý.</div>
         </aside>
@@ -452,6 +455,7 @@
       previewTable: document.getElementById("preview-table"),
       previewBody: document.getElementById("preview-body"),
       generateAll: document.getElementById("generate-all"),
+      generatePdfAll: document.getElementById("generate-pdf-all"),
       generateOne: document.getElementById("generate-one"),
       status: document.getElementById("status")
     };
@@ -585,6 +589,7 @@
     function updateButtons() {
       const ready = state.rows.length > 0 && Boolean(state.templateBuffer);
       elements.generateAll.disabled = !ready;
+      elements.generatePdfAll.disabled = !ready;
       elements.generateOne.disabled = !ready;
     }
 
@@ -821,6 +826,157 @@
       });
     }
 
+    function buildPdfDefinition(row) {
+      const borderLayout = {
+        hLineWidth: () => 0.7,
+        vLineWidth: () => 0.7,
+        hLineColor: () => "#000000",
+        vLineColor: () => "#000000",
+        paddingLeft: () => 5,
+        paddingRight: () => 5,
+        paddingTop: () => 6,
+        paddingBottom: () => 6
+      };
+      const money = `${formatMoney(row.amount)} VND`;
+
+      return {
+        pageSize: "A4",
+        pageMargins: [42, 34, 42, 34],
+        defaultStyle: {
+          font: "Roboto",
+          fontSize: 9,
+          color: "#000000",
+          lineHeight: 1.15
+        },
+        content: [
+          { text: "CÔNG TY CỔ PHẦN CÔNG NGHỆ FEXI", bold: true, fontSize: 12, alignment: "center" },
+          {
+            text: "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam",
+            fontSize: 8,
+            alignment: "center",
+            margin: [45, 3, 45, 8]
+          },
+          { text: "Mẫu số: KT02-BM01", fontSize: 8, alignment: "right" },
+          { text: "ĐỀ NGHỊ THANH TOÁN", bold: true, fontSize: 17, alignment: "center", margin: [0, 6, 0, 5] },
+          {
+            columns: [
+              { text: "" },
+              {
+                width: "auto",
+                columns: [
+                  { text: "Ngày lập: ", bold: true, width: "auto" },
+                  { text: row.dateText, width: "auto" }
+                ]
+              }
+            ],
+            margin: [0, 0, 0, 8]
+          },
+          {
+            table: {
+              widths: ["100%"],
+              body: [[{ text: "THÔNG TIN NGƯỜI ĐỀ NGHỊ", bold: true, alignment: "center", fillColor: "#eeeeee" }]]
+            },
+            layout: borderLayout
+          },
+          {
+            table: {
+              widths: [120, "*"],
+              body: [
+                [{ text: "Người đề nghị:", bold: true }, "Nguyễn Thị Nhung"],
+                [{ text: "Bộ phận:", bold: true }, "Bộ phận Kế toán"]
+              ]
+            },
+            layout: borderLayout
+          },
+          {
+            table: {
+              widths: ["100%"],
+              body: [[{ text: "THÔNG TIN NGƯỜI THỤ HƯỞNG TIỀN", bold: true, alignment: "center", fillColor: "#eeeeee" }]]
+            },
+            layout: borderLayout
+          },
+          {
+            table: {
+              widths: [120, "*"],
+              body: [
+                [{ text: "Người/đơn vị thụ hưởng:", bold: true }, " "],
+                [{ text: "Số tài khoản:", bold: true }, " "],
+                [{ text: "Tại ngân hàng:", bold: true }, " "],
+                [{ text: "Thời gian cần thanh toán:", bold: true }, " "]
+              ]
+            },
+            layout: borderLayout,
+            margin: [0, 0, 0, 8]
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: [24, "*", 34, 26, 72, 78],
+              body: [
+                [
+                  { text: "STT", bold: true, alignment: "center", fillColor: "#eeeeee" },
+                  { text: "Nội dung đề nghị thanh toán", bold: true, alignment: "center", fillColor: "#eeeeee" },
+                  { text: "ĐVT", bold: true, alignment: "center", fillColor: "#eeeeee" },
+                  { text: "SL", bold: true, alignment: "center", fillColor: "#eeeeee" },
+                  { text: "Đơn giá", bold: true, alignment: "center", fillColor: "#eeeeee" },
+                  { text: "Thành tiền", bold: true, alignment: "center", fillColor: "#eeeeee" }
+                ],
+                [
+                  { text: "1", alignment: "center", margin: [0, 7, 0, 7] },
+                  { text: row.description, margin: [0, 7, 0, 7] },
+                  { text: "VND", alignment: "center", margin: [0, 7, 0, 7] },
+                  { text: "1", alignment: "center", margin: [0, 7, 0, 7] },
+                  { text: formatMoney(row.amount), alignment: "right", margin: [0, 7, 0, 7] },
+                  { text: formatMoney(row.amount), alignment: "right", margin: [0, 7, 0, 7] }
+                ],
+                [
+                  { text: "Tổng cộng", bold: true, alignment: "right", colSpan: 5 },
+                  {}, {}, {}, {},
+                  { text: money, bold: true, alignment: "right" }
+                ]
+              ]
+            },
+            layout: borderLayout
+          },
+          {
+            table: {
+              widths: [95, "*"],
+              body: [[
+                { text: "Số tiền bằng chữ:", bold: true },
+                { text: numberToVietnameseWords(row.amount), italics: true }
+              ]]
+            },
+            layout: borderLayout
+          },
+          {
+            text: "Người đề nghị          Trưởng bộ phận          Kế toán thanh toán          Kế toán trưởng          Tổng Giám đốc",
+            bold: true,
+            alignment: "center",
+            fontSize: 8,
+            margin: [0, 20, 0, 0]
+          }
+        ],
+        info: {
+          title: `Đề nghị thanh toán ${row.voucher}`,
+          subject: row.description,
+          creator: "Bộ công cụ hồ sơ LTH"
+        }
+      };
+    }
+
+    function buildPdf(row) {
+      if (!window.pdfMake) {
+        return Promise.reject(new Error("Không tải được thư viện PDF. Hãy kiểm tra kết nối mạng và thử lại."));
+      }
+      return new Promise((resolve, reject) => {
+        try {
+          window.pdfMake.createPdf(buildPdfDefinition(row)).getBlob(resolve);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -896,6 +1052,7 @@
       if (!state.rows.length || !state.templateBuffer) return;
       elements.generateOne.disabled = true;
       elements.generateAll.disabled = true;
+      elements.generatePdfAll.disabled = true;
       try {
         setStatus("Đang sinh file thử...");
         const row = state.rows[0];
@@ -913,6 +1070,7 @@
       if (!state.rows.length || !state.templateBuffer) return;
       elements.generateOne.disabled = true;
       elements.generateAll.disabled = true;
+      elements.generatePdfAll.disabled = true;
       try {
         const outputZip = new JSZip();
         const usedNames = new Map();
@@ -934,6 +1092,39 @@
         });
         downloadBlob(zipBlob, `De_nghi_thanh_toan_${state.rows.length}_file.zip`);
         setStatus(`Đã tạo đủ ${state.rows.length} file.`, "success");
+      } catch (error) {
+        setStatus(error.message || String(error), "error");
+      } finally {
+        updateButtons();
+      }
+    });
+
+    elements.generatePdfAll.addEventListener("click", async () => {
+      if (!state.rows.length || !state.templateBuffer) return;
+      elements.generateOne.disabled = true;
+      elements.generateAll.disabled = true;
+      elements.generatePdfAll.disabled = true;
+      try {
+        const outputZip = new JSZip();
+        const usedNames = new Map();
+        for (let index = 0; index < state.rows.length; index += 1) {
+          const row = state.rows[index];
+          setStatus(`Đang tạo PDF ${index + 1}/${state.rows.length}: ${row.voucher}`);
+          const blob = await buildPdf(row);
+          const base = sanitizeFilename(row.voucher);
+          const seen = (usedNames.get(base) || 0) + 1;
+          usedNames.set(base, seen);
+          const suffix = seen > 1 ? `-${seen}` : "";
+          outputZip.file(`${base}${suffix}.pdf`, blob);
+        }
+        setStatus("Đang đóng gói các file PDF...");
+        const zipBlob = await outputZip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 }
+        });
+        downloadBlob(zipBlob, `De_nghi_thanh_toan_${state.rows.length}_PDF.zip`);
+        setStatus(`Đã tạo đủ ${state.rows.length} file PDF.`, "success");
       } catch (error) {
         setStatus(error.message || String(error), "error");
       } finally {
