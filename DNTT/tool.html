@@ -250,7 +250,8 @@
     }
 
     table {
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       border-collapse: collapse;
       font-size: .86rem;
     }
@@ -270,6 +271,7 @@
       color: var(--muted);
       font-size: .76rem;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     td.amount {
@@ -277,6 +279,11 @@
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
       font-weight: 650;
+    }
+
+    td {
+      min-width: 110px;
+      max-width: 300px;
     }
 
     tbody tr:last-child td { border-bottom: 0; }
@@ -442,22 +449,6 @@
       </div>
 
       <div class="custom-fields" aria-label="Thông tin tùy chỉnh">
-        <label class="text-field">
-          <span>Tên người đề nghị</span>
-          <input id="requester-name" data-testid="requester-name" type="text" autocomplete="name">
-        </label>
-        <label class="text-field">
-          <span>Người/đơn vị thụ hưởng</span>
-          <input id="beneficiary-name" data-testid="beneficiary-name" type="text" autocomplete="name">
-        </label>
-        <label class="text-field">
-          <span>Số tài khoản</span>
-          <input id="account-number" data-testid="account-number" type="text" inputmode="numeric" autocomplete="off">
-        </label>
-        <label class="text-field">
-          <span>Tại ngân hàng</span>
-          <input id="bank-name" data-testid="bank-name" type="text" autocomplete="organization">
-        </label>
         <label class="text-field text-field-wide">
           <span>Địa chỉ</span>
           <input id="company-address" data-testid="company-address" type="text" autocomplete="street-address">
@@ -474,12 +465,7 @@
             <div class="empty" id="empty-state">Chọn danh sách chi để xem trước dữ liệu.</div>
             <table id="preview-table" hidden>
               <thead>
-                <tr>
-                  <th>Chứng từ</th>
-                  <th>Ngày lập</th>
-                  <th>Nội dung</th>
-                  <th style="text-align:right">Số tiền</th>
-                </tr>
+                <tr id="preview-head-row"></tr>
               </thead>
               <tbody id="preview-body"></tbody>
             </table>
@@ -514,20 +500,24 @@
     ];
     const CUSTOM_FIELD_DEFINITIONS = [
       { stateKey: "companyAddress", elementKey: "companyAddress", cellRef: "A2", placeholder: "%DIACHI%" },
-      { stateKey: "requesterName", elementKey: "requesterName", cellRef: "C8", placeholder: "%NGUOIDENGHI%" },
-      { stateKey: "beneficiaryName", elementKey: "beneficiaryName", cellRef: "C11", placeholder: "%NGUOITHUHUONG%" },
-      { stateKey: "accountNumber", elementKey: "accountNumber", cellRef: "C12", placeholder: "%SOTAIKHOAN%" },
-      { stateKey: "bankName", elementKey: "bankName", cellRef: "C13", placeholder: "%TENNGANHANG%" }
+      { stateKey: "requesterName", elementKey: null, cellRef: "C8", placeholder: "%NGUOIDENGHI%" },
+      { stateKey: "department", elementKey: null, cellRef: "C9", placeholder: null },
+      { stateKey: "beneficiaryName", elementKey: null, cellRef: "C11", placeholder: "%NGUOITHUHUONG%" },
+      { stateKey: "accountNumber", elementKey: null, cellRef: "C12", placeholder: "%SOTAIKHOAN%" },
+      { stateKey: "bankName", elementKey: null, cellRef: "C13", placeholder: "%TENNGANHANG%" }
     ];
 
     const state = {
       rows: [],
+      previewHeaders: [],
+      previewAmountColumn: -1,
       templateBuffer: null,
       templateName: "",
       dataName: "",
       pdfFontSizes: {},
       requesterName: "",
       companyAddress: "",
+      department: "",
       beneficiaryName: "",
       accountNumber: "",
       bankName: ""
@@ -549,15 +539,12 @@
       dataMeta: document.getElementById("data-meta"),
       templateName: document.getElementById("template-name"),
       templateMeta: document.getElementById("template-meta"),
-      requesterName: document.getElementById("requester-name"),
       companyAddress: document.getElementById("company-address"),
-      beneficiaryName: document.getElementById("beneficiary-name"),
-      accountNumber: document.getElementById("account-number"),
-      bankName: document.getElementById("bank-name"),
       downloadTemplate: document.getElementById("download-template"),
       recordCount: document.getElementById("record-count"),
       emptyState: document.getElementById("empty-state"),
       previewTable: document.getElementById("preview-table"),
+      previewHeadRow: document.getElementById("preview-head-row"),
       previewBody: document.getElementById("preview-body"),
       generateAll: document.getElementById("generate-all"),
       generatePdfAll: document.getElementById("generate-pdf-all"),
@@ -576,6 +563,7 @@
         .replaceAll("đ", "d")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[:：]+$/g, "")
         .replace(/\s+/g, " ");
     }
 
@@ -743,6 +731,7 @@
 
     function renderPreview() {
       elements.recordCount.textContent = `${state.rows.length} dòng`;
+      elements.previewHeadRow.replaceChildren();
       elements.previewBody.replaceChildren();
       if (!state.rows.length) {
         elements.emptyState.hidden = false;
@@ -751,18 +740,20 @@
         return;
       }
 
+      state.previewHeaders.forEach((header, index) => {
+        const th = document.createElement("th");
+        th.textContent = header || `Cột ${index + 1}`;
+        if (index === state.previewAmountColumn) th.style.textAlign = "right";
+        elements.previewHeadRow.appendChild(th);
+      });
+
       for (const row of state.rows.slice(0, 100)) {
         const tr = document.createElement("tr");
-        const values = [
-          row.voucher,
-          row.dateText,
-          row.description,
-          formatMoney(row.amount)
-        ];
+        const values = row.previewValues;
         values.forEach((value, index) => {
           const td = document.createElement("td");
           td.textContent = value;
-          if (index === 3) td.className = "amount";
+          if (index === state.previewAmountColumn) td.className = "amount";
           tr.appendChild(td);
         });
         elements.previewBody.appendChild(tr);
@@ -777,16 +768,29 @@
         date: ["ngay hach toan", "ngay lap", "ngay"],
         voucher: ["so chung tu", "chung tu"],
         description: ["dien giai", "noi dung", "noi dung de nghi thanh toan"],
-        amount: ["so tien", "thanh tien", "don gia"]
+        amount: ["so tien", "thanh tien", "don gia"],
+        beneficiaryName: ["nguoi/don vi thu huong", "nguoi thu huong", "doi tuong"],
+        accountNumber: ["so tai khoan"],
+        bankName: ["tai ngan hang", "ten ngan hang", "ngan hang"],
+        requesterName: ["nguoi de nghi"],
+        department: ["bo phan"]
       };
+      const requiredKeys = ["date", "voucher", "description", "amount"];
 
       for (let rowIndex = 0; rowIndex < Math.min(matrix.length, 25); rowIndex += 1) {
         const row = matrix[rowIndex].map(normalizeText);
         const columns = {};
         for (const [key, names] of Object.entries(aliases)) {
-          columns[key] = row.findIndex((cell) => names.includes(cell));
+          columns[key] = -1;
+          for (const name of names) {
+            const index = row.indexOf(name);
+            if (index >= 0) {
+              columns[key] = index;
+              break;
+            }
+          }
         }
-        if (Object.values(columns).every((index) => index >= 0)) {
+        if (requiredKeys.every((key) => columns[key] >= 0)) {
           return { rowIndex, columns };
         }
       }
@@ -817,6 +821,15 @@
       const { matrix, header } = selected;
       const rows = [];
       const skipped = [];
+      const sourceHeaders = matrix[header.rowIndex] || [];
+      let previewColumnCount = sourceHeaders.length;
+      while (previewColumnCount > 0 && sourceHeaders[previewColumnCount - 1] == null) {
+        previewColumnCount -= 1;
+      }
+      const previewHeaders = sourceHeaders.slice(0, previewColumnCount).map((value, index) => {
+        const text = String(value ?? "").trim();
+        return text || `Cột ${index + 1}`;
+      });
 
       for (let index = header.rowIndex + 1; index < matrix.length; index += 1) {
         const source = matrix[index];
@@ -824,6 +837,9 @@
         const description = String(source[header.columns.description] ?? "").trim();
         const amount = parseAmount(source[header.columns.amount]);
         const parsedDate = parseDateValue(source[header.columns.date]);
+        const optionalText = (key) => header.columns[key] >= 0
+          ? String(source[header.columns[key]] ?? "").trim()
+          : "";
 
         if (!voucher && !description && !Number.isFinite(amount)) continue;
         if (!voucher || !description || !Number.isFinite(amount) || amount < 0 || !parsedDate) {
@@ -837,11 +853,28 @@
           description,
           amount,
           dateSerial: parsedDate.serial,
-          dateText: formatDate(parsedDate.date)
+          dateText: formatDate(parsedDate.date),
+          beneficiaryName: optionalText("beneficiaryName"),
+          accountNumber: optionalText("accountNumber"),
+          bankName: optionalText("bankName"),
+          requesterName: optionalText("requesterName"),
+          department: optionalText("department"),
+          previewValues: Array.from({ length: previewColumnCount }, (_, columnIndex) => {
+            const value = source[columnIndex];
+            if (columnIndex === header.columns.date) return formatDate(parsedDate.date);
+            if (columnIndex === header.columns.amount) return formatMoney(amount);
+            return String(value ?? "").trim();
+          })
         });
       }
 
-      return { rows, skipped, sheetName: selected.sheetName };
+      return {
+        rows,
+        skipped,
+        sheetName: selected.sheetName,
+        previewHeaders,
+        previewAmountColumn: header.columns.amount
+      };
     }
 
     async function getTemplatePlaceholders(arrayBuffer) {
@@ -991,8 +1024,19 @@
       for (const field of CUSTOM_FIELD_DEFINITIONS) {
         const value = values[field.stateKey] || "";
         state[field.stateKey] = value;
-        elements[field.elementKey].value = value;
+        if (field.elementKey) elements[field.elementKey].value = value;
       }
+    }
+
+    function getOutputFields(row) {
+      return {
+        companyAddress: state.companyAddress,
+        requesterName: row.requesterName || state.requesterName,
+        department: row.department || state.department,
+        beneficiaryName: row.beneficiaryName || state.beneficiaryName,
+        accountNumber: row.accountNumber || state.accountNumber,
+        bankName: row.bankName || state.bankName
+      };
     }
 
     function setFormulaCache(documentXml, cell, value) {
@@ -1011,16 +1055,17 @@
     async function buildWorkbook(row) {
       const zip = await JSZip.loadAsync(state.templateBuffer);
       const sharedStrings = await readSharedStrings(zip);
+      const outputFields = getOutputFields(row);
       const replacements = {
         "%NGAYLAP%": { type: "number", value: row.dateSerial },
         "%NOIDUNG%": { type: "string", value: row.description },
         "%DONGIA%": { type: "number", value: row.amount },
         "%SOTIENBANGCHU%": { type: "string", value: numberToVietnameseWords(row.amount) },
-        "%NGUOIDENGHI%": { type: "string", value: state.requesterName },
-        "%DIACHI%": { type: "string", value: state.companyAddress },
-        "%NGUOITHUHUONG%": { type: "string", value: state.beneficiaryName },
-        "%SOTAIKHOAN%": { type: "string", value: state.accountNumber },
-        "%TENNGANHANG%": { type: "string", value: state.bankName }
+        "%NGUOIDENGHI%": { type: "string", value: outputFields.requesterName },
+        "%DIACHI%": { type: "string", value: outputFields.companyAddress },
+        "%NGUOITHUHUONG%": { type: "string", value: outputFields.beneficiaryName },
+        "%SOTAIKHOAN%": { type: "string", value: outputFields.accountNumber },
+        "%TENNGANHANG%": { type: "string", value: outputFields.bankName }
       };
       const found = new Set();
       const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
@@ -1045,7 +1090,7 @@
             ? CUSTOM_FIELD_DEFINITIONS.find((field) => field.cellRef === ref)
             : null;
           if (customField) {
-            writeCellValue(documentXml, cell, { type: "string", value: state[customField.stateKey] });
+            writeCellValue(documentXml, cell, { type: "string", value: outputFields[customField.stateKey] });
           }
 
           if (ref === "G16" || ref === "G22") {
@@ -1083,6 +1128,7 @@
 
     function buildPdfDefinition(row) {
       const fontSizes = state.pdfFontSizes;
+      const outputFields = getOutputFields(row);
       const size = (name) => fontSizes[name] || fontSizes.default || 11;
       const borderLayout = {
         hLineWidth: () => 0.7,
@@ -1108,7 +1154,7 @@
         content: [
           { text: "CÔNG TY CỔ PHẦN CÔNG NGHỆ FEXI", bold: true, fontSize: size("company"), alignment: "center" },
           {
-            text: state.companyAddress,
+            text: outputFields.companyAddress,
             fontSize: size("address"),
             alignment: "center",
             margin: [45, 3, 45, 8]
@@ -1139,8 +1185,8 @@
             table: {
               widths: [120, "*"],
               body: [
-                [{ text: "Người đề nghị:", bold: true, fontSize: size("fieldLabel") }, { text: state.requesterName, fontSize: size("fieldValue"), alignment: "center" }],
-                [{ text: "Bộ phận:", bold: true, fontSize: size("fieldLabel") }, { text: "Bộ phận Kế toán", fontSize: size("fieldValue"), alignment: "center" }]
+                [{ text: "Người đề nghị:", bold: true, fontSize: size("fieldLabel") }, { text: outputFields.requesterName, fontSize: size("fieldValue"), alignment: "center" }],
+                [{ text: "Bộ phận:", bold: true, fontSize: size("fieldLabel") }, { text: outputFields.department, fontSize: size("fieldValue"), alignment: "center" }]
               ]
             },
             layout: borderLayout
@@ -1156,9 +1202,9 @@
             table: {
               widths: [120, "*"],
               body: [
-                [{ text: "Người/đơn vị thụ hưởng:", bold: true }, { text: state.beneficiaryName, alignment: "center" }],
-                [{ text: "Số tài khoản:", bold: true }, { text: state.accountNumber, alignment: "center" }],
-                [{ text: "Tại ngân hàng:", bold: true }, { text: state.bankName, alignment: "center" }],
+                [{ text: "Người/đơn vị thụ hưởng:", bold: true }, { text: outputFields.beneficiaryName, alignment: "center" }],
+                [{ text: "Số tài khoản:", bold: true }, { text: outputFields.accountNumber, alignment: "center" }],
+                [{ text: "Tại ngân hàng:", bold: true }, { text: outputFields.bankName, alignment: "center" }],
                 [{ text: "Thời gian cần thanh toán:", bold: true }, " "]
               ]
             },
@@ -1288,24 +1334,8 @@
       }
     }
 
-    elements.requesterName.addEventListener("input", (event) => {
-      state.requesterName = event.target.value.trim();
-    });
-
     elements.companyAddress.addEventListener("input", (event) => {
       state.companyAddress = event.target.value.trim();
-    });
-
-    elements.beneficiaryName.addEventListener("input", (event) => {
-      state.beneficiaryName = event.target.value.trim();
-    });
-
-    elements.accountNumber.addEventListener("input", (event) => {
-      state.accountNumber = event.target.value.trim();
-    });
-
-    elements.bankName.addEventListener("input", (event) => {
-      state.bankName = event.target.value.trim();
     });
 
     elements.dataFile.addEventListener("change", async (event) => {
@@ -1314,6 +1344,8 @@
       try {
         const parsed = extractRows(await file.arrayBuffer());
         state.rows = parsed.rows;
+        state.previewHeaders = parsed.previewHeaders;
+        state.previewAmountColumn = parsed.previewAmountColumn;
         state.dataName = file.name;
         elements.dataName.textContent = file.name;
         elements.dataMeta.textContent = `Sheet ${parsed.sheetName}, ${parsed.rows.length} dòng hợp lệ`;
@@ -1322,6 +1354,8 @@
         setStatus(`Đã đọc ${parsed.rows.length} dòng.${skippedText}`, "success");
       } catch (error) {
         state.rows = [];
+        state.previewHeaders = [];
+        state.previewAmountColumn = -1;
         renderPreview();
         elements.dataName.textContent = file.name;
         elements.dataMeta.textContent = "Không đọc được cấu trúc dữ liệu";
