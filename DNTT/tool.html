@@ -112,7 +112,7 @@
 
     .custom-fields {
       display: grid;
-      grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
       padding: 22px 26px 24px;
       border-bottom: 1px solid var(--line);
@@ -124,6 +124,8 @@
       gap: 7px;
       min-width: 0;
     }
+
+    .text-field-wide { grid-column: 1 / -1; }
 
     .text-field span {
       color: var(--muted);
@@ -442,11 +444,23 @@
       <div class="custom-fields" aria-label="Thông tin tùy chỉnh">
         <label class="text-field">
           <span>Tên người đề nghị</span>
-          <input id="requester-name" data-testid="requester-name" type="text" value="Nguyễn Thị Nhung" autocomplete="name">
+          <input id="requester-name" data-testid="requester-name" type="text" autocomplete="name">
         </label>
         <label class="text-field">
+          <span>Người/đơn vị thụ hưởng</span>
+          <input id="beneficiary-name" data-testid="beneficiary-name" type="text" autocomplete="name">
+        </label>
+        <label class="text-field">
+          <span>Số tài khoản</span>
+          <input id="account-number" data-testid="account-number" type="text" inputmode="numeric" autocomplete="off">
+        </label>
+        <label class="text-field">
+          <span>Tại ngân hàng</span>
+          <input id="bank-name" data-testid="bank-name" type="text" autocomplete="organization">
+        </label>
+        <label class="text-field text-field-wide">
           <span>Địa chỉ</span>
-          <input id="company-address" data-testid="company-address" type="text" value="Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam" autocomplete="street-address">
+          <input id="company-address" data-testid="company-address" type="text" autocomplete="street-address">
         </label>
       </div>
 
@@ -498,9 +512,13 @@
       "%DONGIA%",
       "%SOTIENBANGCHU%"
     ];
-    const DEFAULT_REQUESTER_NAME = "Nguyễn Thị Nhung";
-    const DEFAULT_COMPANY_ADDRESS = "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam";
-    const TEMPLATE_DEFAULT_COMPANY_ADDRESS = "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam";
+    const CUSTOM_FIELD_DEFINITIONS = [
+      { stateKey: "companyAddress", elementKey: "companyAddress", cellRef: "A2", placeholder: "%DIACHI%" },
+      { stateKey: "requesterName", elementKey: "requesterName", cellRef: "C8", placeholder: "%NGUOIDENGHI%" },
+      { stateKey: "beneficiaryName", elementKey: "beneficiaryName", cellRef: "C11", placeholder: "%NGUOITHUHUONG%" },
+      { stateKey: "accountNumber", elementKey: "accountNumber", cellRef: "C12", placeholder: "%SOTAIKHOAN%" },
+      { stateKey: "bankName", elementKey: "bankName", cellRef: "C13", placeholder: "%TENNGANHANG%" }
+    ];
 
     const state = {
       rows: [],
@@ -508,8 +526,11 @@
       templateName: "",
       dataName: "",
       pdfFontSizes: {},
-      requesterName: DEFAULT_REQUESTER_NAME,
-      companyAddress: DEFAULT_COMPANY_ADDRESS
+      requesterName: "",
+      companyAddress: "",
+      beneficiaryName: "",
+      accountNumber: "",
+      bankName: ""
     };
 
     const PDF_FONT_NAME = "TimesNewRoman";
@@ -530,6 +551,9 @@
       templateMeta: document.getElementById("template-meta"),
       requesterName: document.getElementById("requester-name"),
       companyAddress: document.getElementById("company-address"),
+      beneficiaryName: document.getElementById("beneficiary-name"),
+      accountNumber: document.getElementById("account-number"),
+      bankName: document.getElementById("bank-name"),
       downloadTemplate: document.getElementById("download-template"),
       recordCount: document.getElementById("record-count"),
       emptyState: document.getElementById("empty-state"),
@@ -873,14 +897,14 @@
       return {
         default: bodySize,
         company: sizeOf("CÔNG TY CỔ PHẦN CÔNG NGHỆ FEXI", bodySize),
-        address: [...sizesByText.entries()].find(([text]) => text.startsWith("Số 59, Ngõ 1"))?.[1] || bodySize,
+        address: sizeOf("%DIACHI%", bodySize),
         formCode: sizeOf("Mẫu số: KT02-BM01", bodySize),
         title: sizeOf("ĐỀ NGHỊ THANH TOÁN", bodySize),
         dateLabel: sizeOf("Ngày lập:", bodySize),
         dateValue: sizeOf("%NGAYLAP%", bodySize),
         sectionHeader: sizeOf("THÔNG TIN NGƯỜI ĐỀ NGHỊ", bodySize),
         fieldLabel: sizeOf("Người đề nghị:", bodySize),
-        fieldValue: sizeOf("Nguyễn Thị Nhung", bodySize),
+        fieldValue: sizeOf("%NGUOIDENGHI%", bodySize),
         tableHeader: sizeOf("STT", bodySize),
         tableBody: bodySize,
         money: sizeOf("%DONGIA%", bodySize),
@@ -935,6 +959,42 @@
       cell.appendChild(inline);
     }
 
+    function getCellByRef(documentXml, ref) {
+      return [...documentXml.querySelectorAll("c")].find((cell) => cell.getAttribute("r") === ref) || null;
+    }
+
+    async function readTemplateCustomFields(arrayBuffer) {
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const sharedStrings = await readSharedStrings(zip);
+      const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
+
+      for (const worksheetPath of paths) {
+        const xml = await zip.file(worksheetPath).async("string");
+        const documentXml = new DOMParser().parseFromString(xml, "application/xml");
+        const texts = [...documentXml.querySelectorAll("c")].map((cell) => getCellText(cell, sharedStrings));
+        const isPaymentTemplate = texts.includes("THÔNG TIN NGƯỜI ĐỀ NGHỊ")
+          && texts.includes("THÔNG TIN NGƯỜI THỤ HƯỞNG TIỀN");
+        if (!isPaymentTemplate) continue;
+
+        return Object.fromEntries(CUSTOM_FIELD_DEFINITIONS.map((field) => {
+          const cell = getCellByRef(documentXml, field.cellRef);
+          const rawValue = cell ? getCellText(cell, sharedStrings) : "";
+          const value = rawValue === field.placeholder ? "" : String(rawValue).replace(/\s+/g, " ").trim();
+          return [field.stateKey, value];
+        }));
+      }
+
+      return Object.fromEntries(CUSTOM_FIELD_DEFINITIONS.map((field) => [field.stateKey, ""]));
+    }
+
+    function applyTemplateCustomFields(values) {
+      for (const field of CUSTOM_FIELD_DEFINITIONS) {
+        const value = values[field.stateKey] || "";
+        state[field.stateKey] = value;
+        elements[field.elementKey].value = value;
+      }
+    }
+
     function setFormulaCache(documentXml, cell, value) {
       const formula = cell.querySelector("f");
       if (!formula) {
@@ -958,9 +1018,9 @@
         "%SOTIENBANGCHU%": { type: "string", value: numberToVietnameseWords(row.amount) },
         "%NGUOIDENGHI%": { type: "string", value: state.requesterName },
         "%DIACHI%": { type: "string", value: state.companyAddress },
-        [DEFAULT_REQUESTER_NAME]: { type: "string", value: state.requesterName },
-        [DEFAULT_COMPANY_ADDRESS]: { type: "string", value: state.companyAddress },
-        [TEMPLATE_DEFAULT_COMPANY_ADDRESS]: { type: "string", value: state.companyAddress }
+        "%NGUOITHUHUONG%": { type: "string", value: state.beneficiaryName },
+        "%SOTAIKHOAN%": { type: "string", value: state.accountNumber },
+        "%TENNGANHANG%": { type: "string", value: state.bankName }
       };
       const found = new Set();
       const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
@@ -968,7 +1028,12 @@
       for (const worksheetPath of paths) {
         const xml = await zip.file(worksheetPath).async("string");
         const documentXml = new DOMParser().parseFromString(xml, "application/xml");
-        for (const cell of documentXml.querySelectorAll("c")) {
+        const cells = [...documentXml.querySelectorAll("c")];
+        const texts = cells.map((cell) => getCellText(cell, sharedStrings));
+        const isPaymentTemplate = texts.includes("THÔNG TIN NGƯỜI ĐỀ NGHỊ")
+          && texts.includes("THÔNG TIN NGƯỜI THỤ HƯỞNG TIỀN");
+
+        for (const cell of cells) {
           const placeholder = getCellText(cell, sharedStrings);
           if (replacements[placeholder]) {
             writeCellValue(documentXml, cell, replacements[placeholder]);
@@ -976,6 +1041,13 @@
           }
 
           const ref = cell.getAttribute("r");
+          const customField = isPaymentTemplate
+            ? CUSTOM_FIELD_DEFINITIONS.find((field) => field.cellRef === ref)
+            : null;
+          if (customField) {
+            writeCellValue(documentXml, cell, { type: "string", value: state[customField.stateKey] });
+          }
+
           if (ref === "G16" || ref === "G22") {
             setFormulaCache(documentXml, cell, row.amount);
           }
@@ -1084,9 +1156,9 @@
             table: {
               widths: [120, "*"],
               body: [
-                [{ text: "Người/đơn vị thụ hưởng:", bold: true }, " "],
-                [{ text: "Số tài khoản:", bold: true }, " "],
-                [{ text: "Tại ngân hàng:", bold: true }, " "],
+                [{ text: "Người/đơn vị thụ hưởng:", bold: true }, { text: state.beneficiaryName, alignment: "center" }],
+                [{ text: "Số tài khoản:", bold: true }, { text: state.accountNumber, alignment: "center" }],
+                [{ text: "Tại ngân hàng:", bold: true }, { text: state.bankName, alignment: "center" }],
                 [{ text: "Thời gian cần thanh toán:", bold: true }, " "]
               ]
             },
@@ -1187,17 +1259,19 @@
     }
 
     async function loadTemplateBuffer(buffer, filename) {
-      const [placeholders, pdfFontSizes] = await Promise.all([
+      const [placeholders, pdfFontSizes, customFields] = await Promise.all([
         getTemplatePlaceholders(buffer),
-        readTemplatePdfFontSizes(buffer)
+        readTemplatePdfFontSizes(buffer),
+        readTemplateCustomFields(buffer)
       ]);
       const missing = REQUIRED_PLACEHOLDERS.filter((item) => !placeholders.has(item));
       if (missing.length) throw new Error(`Mẫu thiếu placeholder: ${missing.join(", ")}`);
       state.templateBuffer = buffer;
       state.templateName = filename;
       state.pdfFontSizes = pdfFontSizes;
+      applyTemplateCustomFields(customFields);
       elements.templateName.textContent = filename;
-      elements.templateMeta.textContent = "Đã kiểm tra đủ 4 placeholder";
+      elements.templateMeta.textContent = "Đã kiểm tra mẫu và đọc 5 trường mặc định";
       updateButtons();
     }
 
@@ -1220,6 +1294,18 @@
 
     elements.companyAddress.addEventListener("input", (event) => {
       state.companyAddress = event.target.value.trim();
+    });
+
+    elements.beneficiaryName.addEventListener("input", (event) => {
+      state.beneficiaryName = event.target.value.trim();
+    });
+
+    elements.accountNumber.addEventListener("input", (event) => {
+      state.accountNumber = event.target.value.trim();
+    });
+
+    elements.bankName.addEventListener("input", (event) => {
+      state.bankName = event.target.value.trim();
     });
 
     elements.dataFile.addEventListener("change", async (event) => {
