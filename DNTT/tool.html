@@ -110,6 +110,42 @@
       border-left: 1px solid var(--line);
     }
 
+    .custom-fields {
+      display: grid;
+      grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr);
+      gap: 18px;
+      padding: 22px 26px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .text-field {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .text-field span {
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .text-field input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .text-field input:focus {
+      outline: 3px solid color-mix(in srgb, var(--accent) 24%, transparent);
+      border-color: var(--accent);
+    }
+
     .step-label {
       margin: 0 0 8px;
       color: var(--muted);
@@ -351,7 +387,7 @@
 
     @media (max-width: 780px) {
       .shell { width: min(100% - 20px, 680px); padding-top: 24px; }
-      header, .setup, .results { grid-template-columns: 1fr; }
+      header, .setup, .custom-fields, .results { grid-template-columns: 1fr; }
       header { gap: 14px; }
       h1 { font-size: clamp(2.2rem, 12vw, 3.5rem); }
       .file-panel + .file-panel { border-left: 0; border-top: 1px solid var(--line); }
@@ -403,6 +439,17 @@
         </section>
       </div>
 
+      <div class="custom-fields" aria-label="Thông tin tùy chỉnh">
+        <label class="text-field">
+          <span>Tên người đề nghị</span>
+          <input id="requester-name" data-testid="requester-name" type="text" value="Nguyễn Thị Nhung" autocomplete="name">
+        </label>
+        <label class="text-field">
+          <span>Địa chỉ</span>
+          <input id="company-address" data-testid="company-address" type="text" value="Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam" autocomplete="street-address">
+        </label>
+      </div>
+
       <div class="results">
         <section class="preview">
           <div class="preview-head">
@@ -431,7 +478,8 @@
           <p>Mỗi dòng tạo một file Excel hoặc PDF. Tên file lấy từ cột Số chứng từ.</p>
           <button class="btn btn-primary" id="generate-all" data-testid="generate-all" type="button" disabled>Tải toàn bộ Excel (.zip)</button>
           <button class="btn btn-secondary" id="generate-pdf-all" data-testid="generate-pdf-all" type="button" disabled>Tải toàn bộ PDF (.zip)</button>
-          <button class="btn btn-secondary" id="generate-one" data-testid="generate-one" type="button" disabled>Tải thử 1 file đầu tiên</button>
+          <button class="btn btn-secondary" id="generate-one" data-testid="generate-one" type="button" disabled>Tải thử 1 file Excel đầu tiên</button>
+          <button class="btn btn-secondary" id="generate-pdf-one" data-testid="generate-pdf-one" type="button" disabled>Tải thử 1 file PDF đầu tiên</button>
           <div class="status" id="status" role="status" aria-live="polite">Chưa có dữ liệu để xử lý.</div>
         </aside>
       </div>
@@ -450,13 +498,18 @@
       "%DONGIA%",
       "%SOTIENBANGCHU%"
     ];
+    const DEFAULT_REQUESTER_NAME = "Nguyễn Thị Nhung";
+    const DEFAULT_COMPANY_ADDRESS = "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam";
+    const TEMPLATE_DEFAULT_COMPANY_ADDRESS = "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam";
 
     const state = {
       rows: [],
       templateBuffer: null,
       templateName: "",
       dataName: "",
-      pdfFontSizes: {}
+      pdfFontSizes: {},
+      requesterName: DEFAULT_REQUESTER_NAME,
+      companyAddress: DEFAULT_COMPANY_ADDRESS
     };
 
     const PDF_FONT_NAME = "TimesNewRoman";
@@ -475,6 +528,8 @@
       dataMeta: document.getElementById("data-meta"),
       templateName: document.getElementById("template-name"),
       templateMeta: document.getElementById("template-meta"),
+      requesterName: document.getElementById("requester-name"),
+      companyAddress: document.getElementById("company-address"),
       downloadTemplate: document.getElementById("download-template"),
       recordCount: document.getElementById("record-count"),
       emptyState: document.getElementById("empty-state"),
@@ -483,6 +538,7 @@
       generateAll: document.getElementById("generate-all"),
       generatePdfAll: document.getElementById("generate-pdf-all"),
       generateOne: document.getElementById("generate-one"),
+      generatePdfOne: document.getElementById("generate-pdf-one"),
       status: document.getElementById("status")
     };
 
@@ -657,6 +713,7 @@
       elements.generateAll.disabled = !ready;
       elements.generatePdfAll.disabled = !ready;
       elements.generateOne.disabled = !ready;
+      elements.generatePdfOne.disabled = !ready;
       elements.downloadTemplate.disabled = !state.templateBuffer;
     }
 
@@ -898,7 +955,12 @@
         "%NGAYLAP%": { type: "number", value: row.dateSerial },
         "%NOIDUNG%": { type: "string", value: row.description },
         "%DONGIA%": { type: "number", value: row.amount },
-        "%SOTIENBANGCHU%": { type: "string", value: numberToVietnameseWords(row.amount) }
+        "%SOTIENBANGCHU%": { type: "string", value: numberToVietnameseWords(row.amount) },
+        "%NGUOIDENGHI%": { type: "string", value: state.requesterName },
+        "%DIACHI%": { type: "string", value: state.companyAddress },
+        [DEFAULT_REQUESTER_NAME]: { type: "string", value: state.requesterName },
+        [DEFAULT_COMPANY_ADDRESS]: { type: "string", value: state.companyAddress },
+        [TEMPLATE_DEFAULT_COMPANY_ADDRESS]: { type: "string", value: state.companyAddress }
       };
       const found = new Set();
       const paths = Object.keys(zip.files).filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name));
@@ -974,7 +1036,7 @@
         content: [
           { text: "CÔNG TY CỔ PHẦN CÔNG NGHỆ FEXI", bold: true, fontSize: size("company"), alignment: "center" },
           {
-            text: "Số 59, Ngõ 1, Đường Nguỵ Như Kon Tum, Phường Nhân Chính, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam",
+            text: state.companyAddress,
             fontSize: size("address"),
             alignment: "center",
             margin: [45, 3, 45, 8]
@@ -1005,7 +1067,7 @@
             table: {
               widths: [120, "*"],
               body: [
-                [{ text: "Người đề nghị:", bold: true, fontSize: size("fieldLabel") }, { text: "Nguyễn Thị Nhung", fontSize: size("fieldValue"), alignment: "center" }],
+                [{ text: "Người đề nghị:", bold: true, fontSize: size("fieldLabel") }, { text: state.requesterName, fontSize: size("fieldValue"), alignment: "center" }],
                 [{ text: "Bộ phận:", bold: true, fontSize: size("fieldLabel") }, { text: "Bộ phận Kế toán", fontSize: size("fieldValue"), alignment: "center" }]
               ]
             },
@@ -1152,6 +1214,14 @@
       }
     }
 
+    elements.requesterName.addEventListener("input", (event) => {
+      state.requesterName = event.target.value.trim();
+    });
+
+    elements.companyAddress.addEventListener("input", (event) => {
+      state.companyAddress = event.target.value.trim();
+    });
+
     elements.dataFile.addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -1202,6 +1272,7 @@
       elements.generateOne.disabled = true;
       elements.generateAll.disabled = true;
       elements.generatePdfAll.disabled = true;
+      elements.generatePdfOne.disabled = true;
       try {
         setStatus("Đang sinh file thử...");
         const row = state.rows[0];
@@ -1215,11 +1286,31 @@
       }
     });
 
+    elements.generatePdfOne.addEventListener("click", async () => {
+      if (!state.rows.length || !state.templateBuffer) return;
+      elements.generateOne.disabled = true;
+      elements.generateAll.disabled = true;
+      elements.generatePdfAll.disabled = true;
+      elements.generatePdfOne.disabled = true;
+      try {
+        setStatus("Đang sinh file PDF thử...");
+        const row = state.rows[0];
+        const blob = await buildPdf(row);
+        downloadBlob(blob, `${sanitizeFilename(row.voucher)}.pdf`);
+        setStatus(`Đã tạo ${sanitizeFilename(row.voucher)}.pdf`, "success");
+      } catch (error) {
+        setStatus(error.message || String(error), "error");
+      } finally {
+        updateButtons();
+      }
+    });
+
     elements.generateAll.addEventListener("click", async () => {
       if (!state.rows.length || !state.templateBuffer) return;
       elements.generateOne.disabled = true;
       elements.generateAll.disabled = true;
       elements.generatePdfAll.disabled = true;
+      elements.generatePdfOne.disabled = true;
       try {
         const outputZip = new JSZip();
         const usedNames = new Map();
@@ -1253,6 +1344,7 @@
       elements.generateOne.disabled = true;
       elements.generateAll.disabled = true;
       elements.generatePdfAll.disabled = true;
+      elements.generatePdfOne.disabled = true;
       try {
         const outputZip = new JSZip();
         const usedNames = new Map();
