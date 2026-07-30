@@ -1287,7 +1287,8 @@
             bold: true,
             fontSize: size("signature"),
             columnGap: 0,
-            margin: [0, 28, 0, 0]
+            // Giữ khoảng cách cũ và chừa thêm đúng 4 dòng ký tên.
+            margin: [0, 28 + (4 * size("signature") * 1.15), 0, 0]
           }
         ],
         info: {
