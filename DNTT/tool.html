@@ -532,6 +532,7 @@
       italics: "fonts/Times New Roman Italic.ttf",
       bolditalics: "fonts/Times New Roman Bold Italic.ttf"
     };
+    const PDF_MAX_FONT_SIZE = 12;
     let pdfFontsReady = null;
 
     const elements = {
@@ -1135,7 +1136,7 @@
     function buildPdfDefinition(row) {
       const fontSizes = state.pdfFontSizes;
       const outputFields = getOutputFields(row);
-      const size = (name) => fontSizes[name] || fontSizes.default || 11;
+      const size = (name) => Math.min(fontSizes[name] || fontSizes.default || PDF_MAX_FONT_SIZE, PDF_MAX_FONT_SIZE);
       const borderLayout = {
         hLineWidth: () => 0.7,
         vLineWidth: () => 0.7,
